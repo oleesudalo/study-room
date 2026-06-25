@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -12,7 +11,6 @@ const firebaseConfig = {
   appId: "1:1072114866393:web:a162826ab92f7e610706c8"
 };
 
-// 앱 초기화 로직 보완
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 const appId = "dongmyeong-study";
@@ -26,12 +24,6 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [recordResult, setRecordResult] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
-
-  // 인증 모듈을 컴포넌트 내부에서 안전하게 호출
-  useEffect(() => {
-    const auth = getAuth(app);
-    signInAnonymously(auth).catch(() => {}); 
-  }, []);
 
   useEffect(() => {
     if (statusMessage) {
@@ -90,18 +82,15 @@ export default function App() {
           </div>
         )}
         <h1 className="text-3xl font-black text-center text-blue-900">동명 열공 프로젝트</h1>
-        
         <div className="bg-blue-800 text-white p-5 rounded-2xl text-center">
             <div className="font-bold text-lg">6월 29일(월) ~ 7월 3일(금)</div>
             <div className="text-xs opacity-75 mt-1">매일 12:35 ~ 1:25 (50분)</div>
         </div>
-
         <div className="grid grid-cols-3 gap-2 mt-auto">
           <button onClick={() => setActiveModal('in')} className="bg-blue-600 text-white font-bold py-4 rounded-xl">입실</button>
           <button onClick={() => setActiveModal('out')} className="bg-red-500 text-white font-bold py-4 rounded-xl">퇴실</button>
           <button onClick={() => setActiveModal('time')} className="bg-emerald-600 text-white font-bold py-4 rounded-xl">시간조회</button>
         </div>
-
         {activeModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm space-y-4">
