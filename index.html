@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
@@ -19,6 +19,19 @@ export default function App() {
   const [recordResult, setRecordResult] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
 
+  useEffect(() => { signInAnonymously(auth); }, []);
+
+  useEffect(() => {
+    if (statusMessage) {
+      const timer = setTimeout(() => {
+        setStatusMessage('');
+        setActiveModal(null);
+        setRecordResult(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
+
   const getDocId = () => `${grade}-${classNum}-${studentNum}`;
 
   const handleCheckIn = async () => {
@@ -26,16 +39,10 @@ export default function App() {
     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', docId);
     try {
       const docSnap = await getDoc(docRef);
-      if (docSnap.exists() && docSnap.data().status === 'in') {
-        setStatusMessage("이미 입실 상태입니다.");
-        return;
-      }
+      if (docSnap.exists() && docSnap.data().status === 'in') return setStatusMessage("이미 입실 상태입니다.");
       await setDoc(docRef, { grade, classNum, studentNum, name, password, status: 'in', lastEntryTime: Date.now(), totalStudyTime: docSnap.exists() ? docSnap.data().totalStudyTime : 0 }, {merge: true});
-      setStatusMessage(`${name} 학생, 입실 완료!`);
-      setActiveModal(null);
-    } catch (e) { 
-      setStatusMessage("데이터베이스 연결 실패: Firebase 규칙을 확인하세요."); 
-    }
+      setStatusMessage(`${name}님, 입실 완료!`);
+    } catch (e) { setStatusMessage("연결 실패: 규칙을 확인하세요."); }
   };
 
   const handleCheckOut = async () => {
@@ -43,19 +50,11 @@ export default function App() {
     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', docId);
     try {
       const docSnap = await getDoc(docRef);
-      if (!docSnap.exists() || docSnap.data().status !== 'in') {
-        setStatusMessage("입실 내역이 없습니다.");
-        return;
-      }
-      const data = docSnap.data();
-      if (data.password !== password) {
-        setStatusMessage("비밀번호 불일치");
-        return;
-      }
-      const newTotal = data.totalStudyTime + (Date.now() - data.lastEntryTime);
+      if (!docSnap.exists() || docSnap.data().status !== 'in') return setStatusMessage("입실 내역이 없습니다.");
+      if (docSnap.data().password !== password) return setStatusMessage("비밀번호가 다릅니다.");
+      const newTotal = docSnap.data().totalStudyTime + (Date.now() - docSnap.data().lastEntryTime);
       await updateDoc(docRef, { status: 'out', totalStudyTime: newTotal, lastEntryTime: null });
-      setStatusMessage("퇴실 완료!");
-      setActiveModal(null);
+      setStatusMessage("퇴실 완료! 3초 후 닫힙니다.");
     } catch (e) { setStatusMessage("오류 발생"); }
   };
 
@@ -63,16 +62,9 @@ export default function App() {
     const docId = getDocId();
     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', docId);
     const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) {
-      setRecordResult({ total: 0 });
-      return;
-    }
-    const data = docSnap.data();
-    if (data.password !== password) {
-      setStatusMessage("비밀번호 불일치");
-      return;
-    }
-    setRecordResult({ total: data.status === 'in' ? data.totalStudyTime + (Date.now() - data.lastEntryTime) : data.totalStudyTime });
+    if (!docSnap.exists()) return setRecordResult({ total: 0 });
+    if (docSnap.data().password !== password) return setStatusMessage("비밀번호가 다릅니다.");
+    setRecordResult({ total: docSnap.data().status === 'in' ? docSnap.data().totalStudyTime + (Date.now() - docSnap.data().lastEntryTime) : docSnap.data().totalStudyTime });
   };
 
   const formatTime = (ms) => `${Math.floor(ms / 3600000)}시간 ${Math.floor((ms % 3600000) / 60000)}분`;
@@ -81,54 +73,58 @@ export default function App() {
     <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-xl flex flex-col gap-6">
         {statusMessage && (
-          <div className="bg-yellow-100 p-4 rounded-xl text-yellow-800 text-sm font-bold animate-pulse">
-            {statusMessage} <button onClick={() => setStatusMessage('')} className="ml-2 underline">닫기</button>
+          <div className="bg-blue-600 text-white p-4 rounded-xl text-center font-bold animate-bounce fixed top-4 left-4 right-4 z-[100]">
+            {statusMessage}
           </div>
         )}
-        <div className="flex justify-center"><div className="bg-blue-100 text-blue-600 font-bold px-4 py-1 rounded-full text-sm">✏️ STUDY PROJECT ✏️</div></div>
+        
+        {/* 상단 구성 복구 */}
+        <div className="flex justify-center"><div className="bg-blue-100 text-blue-600 font-bold px-4 py-1 rounded-full text-sm tracking-widest">✏️ STUDY PROJECT ✏️</div></div>
         <h1 className="text-3xl font-black text-center text-blue-900">동명 열공 프로젝트</h1>
-        <p className="text-center text-gray-500">같이 공부하면 더 재밌어! 5일 완주 도전 🌟</p>
+        <p className="text-center text-gray-500 text-sm">같이 공부하면 더 재밌어! 5일 완주 도전 🌟</p>
         
         <div className="bg-blue-800 text-white p-5 rounded-2xl text-center">
-            <div className="text-sm opacity-80 mb-1">🗓 일정</div>
-            <div className="font-bold text-lg">6월 29일(월) ~ 7월 3일(금)</div>
-            <div className="text-xs opacity-75 mt-1">5일간 진행 / 매일 12:35 ~ 1:25 (50분)</div>
+            <div className="text-xs opacity-80 mb-1">🗓 일정</div>
+            <div className="font-bold text-base">6월 29일(월) ~ 7월 3일(금)</div>
+            <div className="text-[10px] opacity-75 mt-1">5일간 진행 / 매일 12:35 ~ 1:25 (50분)</div>
         </div>
 
         <div className="flex gap-2">
-            <div className="flex-1 bg-green-50 p-3 rounded-xl border border-green-200 text-center text-green-800 font-bold text-sm">학생 자치회실</div>
-            <div className="flex-1 bg-blue-50 p-3 rounded-xl border border-blue-200 text-center text-blue-800 font-bold text-sm">학교 도서실</div>
+            <div className="flex-1 bg-green-50 p-3 rounded-xl border text-center text-green-800 font-bold text-xs">학생 자치회실</div>
+            <div className="flex-1 bg-blue-50 p-3 rounded-xl border text-center text-blue-800 font-bold text-xs">학교 도서실</div>
         </div>
 
         <div className="space-y-2">
-            <div className="text-sm font-bold text-gray-500">⚠️ 참가 규칙</div>
-            <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-500 text-sm">🚫 친구 자리 맞추기 금지</div>
-            <div className="bg-gray-50 p-3 rounded-lg border-l-4 border-gray-500 text-sm">🪑 자리 이탈 금지</div>
-            <div className="bg-red-50 p-3 rounded-lg border-l-4 border-red-500 text-sm">🔴 경고 2회 시 강퇴</div>
+            <div className="text-sm font-bold text-gray-600">⚠️ 참가 규칙</div>
+            <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-500 text-xs">🚫 친구 자리 맞추기 금지</div>
+            <div className="bg-gray-50 p-3 rounded-lg border-l-4 border-gray-500 text-xs">🪑 자리 이탈 금지</div>
+            <div className="bg-red-50 p-3 rounded-lg border-l-4 border-red-500 text-xs">🔴 경고 2회 시 강퇴</div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-auto">
-          <button onClick={() => setActiveModal('in')} className="bg-blue-600 text-white font-bold py-4 rounded-xl">입실</button>
-          <button onClick={() => setActiveModal('out')} className="bg-red-500 text-white font-bold py-4 rounded-xl">퇴실</button>
-          <button onClick={() => setActiveModal('time')} className="bg-emerald-600 text-white font-bold py-4 rounded-xl">누적 시간</button>
+          <button onClick={() => setActiveModal('in')} className="bg-blue-600 text-white font-bold py-4 rounded-xl text-sm">입실</button>
+          <button onClick={() => setActiveModal('out')} className="bg-red-500 text-white font-bold py-4 rounded-xl text-sm">퇴실</button>
+          <button onClick={() => setActiveModal('time')} className="bg-emerald-600 text-white font-bold py-4 rounded-xl text-sm">누적 시간</button>
         </div>
 
         {activeModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white p-6 rounded-2xl w-full max-w-sm space-y-4">
-              <h2 className="font-bold text-xl">정보 입력</h2>
+              <h2 className="font-bold text-lg">정보 입력</h2>
               <div className="flex gap-2">
-                <select onChange={e=>setGrade(e.target.value)} className="border p-2 rounded w-full"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
-                <input type="number" onChange={e=>setClassNum(e.target.value)} placeholder="반" className="border p-2 rounded w-16"/>
-                <input type="number" onChange={e=>setStudentNum(e.target.value)} placeholder="번호" className="border p-2 rounded w-16"/>
+                <select onChange={e=>setGrade(e.target.value)} className="border p-2 rounded w-full text-sm"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
+                <input type="number" onChange={e=>setClassNum(e.target.value)} placeholder="반" className="border p-2 rounded w-16 text-sm"/>
+                <input type="number" onChange={e=>setStudentNum(e.target.value)} placeholder="번호" className="border p-2 rounded w-16 text-sm"/>
               </div>
-              {(activeModal === 'in' || activeModal === 'out') && <input type="text" onChange={e=>setName(e.target.value)} placeholder="이름" className="w-full border p-2 rounded"/>}
-              <input type="password" onChange={e=>setPassword(e.target.value)} placeholder="비밀번호(4자리)" className="w-full border p-2 rounded"/>
-              {activeModal === 'in' && <button onClick={handleCheckIn} className="w-full bg-blue-600 text-white py-2 rounded font-bold">입실 확인</button>}
-              {activeModal === 'out' && <button onClick={handleCheckOut} className="w-full bg-red-600 text-white py-2 rounded font-bold">퇴실 확인</button>}
-              {activeModal === 'time' && <button onClick={handleViewRecord} className="w-full bg-emerald-600 text-white py-2 rounded font-bold">조회</button>}
-              {recordResult && <div className="text-center font-bold text-lg p-3 bg-gray-100 rounded">{formatTime(recordResult.total)}</div>}
-              <button onClick={() => {setActiveModal(null); setRecordResult(null);}} className="w-full bg-gray-200 py-2 rounded">닫기</button>
+              {(activeModal === 'in' || activeModal === 'out') && <input type="text" onChange={e=>setName(e.target.value)} placeholder="이름" className="w-full border p-2 rounded text-sm"/>}
+              <input type="password" onChange={e=>setPassword(e.target.value)} placeholder="비밀번호(4자리)" className="w-full border p-2 rounded text-sm"/>
+              
+              {activeModal === 'in' && <button onClick={handleCheckIn} className="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm">입실 확인</button>}
+              {activeModal === 'out' && <button onClick={handleCheckOut} className="w-full bg-red-600 text-white py-2 rounded font-bold text-sm">퇴실 확인</button>}
+              {activeModal === 'time' && <button onClick={handleViewRecord} className="w-full bg-emerald-600 text-white py-2 rounded font-bold text-sm">조회</button>}
+              
+              {recordResult && <div className="text-center font-bold text-md p-3 bg-gray-100 rounded text-sm">{formatTime(recordResult.total)}</div>}
+              <button onClick={() => {setActiveModal(null); setRecordResult(null);}} className="w-full bg-gray-200 py-2 rounded text-sm">닫기</button>
             </div>
           </div>
         )}
