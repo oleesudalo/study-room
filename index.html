@@ -7,9 +7,16 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Noto Sans KR', sans-serif; background: #e8f4f8; }
+    body { font-family: 'Noto Sans KR', sans-serif; }
     .dot-decoration { width: 80px; height: 80px; border-radius: 50%; position: absolute; opacity: 0.3; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 50; }
+    .modal-box { background: #fff; border-radius: 16px; padding: 24px; width: 90%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-box input { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; font-size: 14px; }
+    .modal-box input:focus { outline: none; border-color: #2a9d8f; }
+    .alert-box { background: #fff; border-radius: 12px; padding: 20px; text-align: center; width: 85%; max-width: 300px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
   <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
@@ -76,10 +83,198 @@
       <p data-template-id="reward-subtext" class="canva-text text-xs" style="color:#5a7a8a;font-size:12px;">하루도 빠짐없이 참석한 분께 드리는 특별 선물!</p>
      </div>
     </section>
-    <section class="w-full grid grid-cols-4 gap-2"><button data-template-id="button-checkin" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#2a9d8f;color:#fff;">입실</button> <button data-template-id="button-checkout" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#d97706;color:#fff;">퇴실</button> <button data-template-id="button-time" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#3b82f6;color:#fff;">누적시간</button> <button data-template-id="button-ranking" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#ec4899;color:#fff;">순위</button>
+    <section class="w-full grid grid-cols-4 gap-2">
+     <button data-template-id="button-checkin" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#2a9d8f;color:#fff;" onclick="openModal('checkin')">입실</button> <button data-template-id="button-checkout" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#d97706;color:#fff;" onclick="openModal('checkout')">퇴실</button> <button data-template-id="button-time" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#3b82f6;color:#fff;" onclick="openTimeModal()">누적시간</button> <button data-template-id="button-ranking" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#ec4899;color:#fff;" onclick="openRankingModal()">순위</button>
     </section>
+   </div>
+  </div><!-- Check-in/out Modal -->
+  <div id="formModal" class="modal-overlay hidden">
+   <div class="modal-box">
+    <h3 id="modalTitle" class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;"></h3><input id="inp-grade" type="number" placeholder="학년" min="1" max="3"> <input id="inp-class" type="number" placeholder="반" min="1" max="20"> <input id="inp-number" type="number" placeholder="번호" min="1" max="40"> <input id="inp-name" type="text" placeholder="이름"> <input id="inp-password" type="password" placeholder="비밀번호">
+    <div class="flex gap-2 mt-2">
+     <button onclick="closeModal()" class="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-600">취소</button> <button id="modalConfirm" class="flex-1 py-2 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">확인</button>
+    </div>
+   </div>
+  </div><!-- Alert Modal -->
+  <div id="alertModal" class="modal-overlay hidden">
+   <div class="alert-box">
+    <p id="alertMsg" class="font-medium text-sm mb-3" style="color:#1a3a4a;"></p><button onclick="closeAlert()" class="px-6 py-2 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">확인</button>
+   </div>
+  </div><!-- Time Modal -->
+  <div id="timeModal" class="modal-overlay hidden">
+   <div class="modal-box">
+    <h3 class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;">누적시간 조회</h3><input id="time-grade" type="number" placeholder="학년" min="1" max="3"> <input id="time-class" type="number" placeholder="반" min="1" max="20"> <input id="time-number" type="number" placeholder="번호" min="1" max="40"> <input id="time-name" type="text" placeholder="이름">
+    <div id="timeResult" class="text-center text-sm font-medium py-2 hidden" style="color:#2a9d8f;"></div>
+    <div class="flex gap-2 mt-2">
+     <button onclick="document.getElementById('timeModal').classList.add('hidden')" class="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-600">닫기</button> <button onclick="queryTime()" class="flex-1 py-2 rounded-lg text-sm font-bold text-white" style="background:#3b82f6;">조회</button>
+    </div>
+   </div>
+  </div><!-- Ranking Modal -->
+  <div id="rankingModal" class="modal-overlay hidden">
+   <div class="modal-box" style="max-width:400px;max-height:500px;overflow-y:auto;">
+    <h3 class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;">🏆 순위</h3>
+    <div id="rankingList" class="space-y-2">
+    </div>
+    <div class="flex gap-2 mt-4">
+     <button onclick="document.getElementById('rankingModal').classList.add('hidden')" class="w-full py-2 rounded-lg text-sm font-medium text-white" style="background:#2a9d8f;">닫기</button>
+    </div>
    </div>
   </div>
   <script src="/_sdk/editing_sdk.js"></script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1113fc8025d30da',t:'MTc4MjM2MTk1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+  <script>
+    // Firebase init
+    firebase.initializeApp({
+      apiKey: "AIzaSyAcY8A8MvbKoeh8H1FVwsxkmTkKT4gii-U",
+      authDomain: "dongmyeong-study.firebaseapp.com",
+      projectId: "dongmyeong-study",
+      storageBucket: "dongmyeong-study.firebasestorage.app",
+      messagingSenderId: ".",
+      appId: "1:.:web:a162826ab92f7e610706c8"
+    });
+    const db = firebase.firestore();
+
+    let currentMode = '';
+
+    function openModal(mode) {
+      currentMode = mode;
+      document.getElementById('modalTitle').textContent = mode === 'checkin' ? '입실' : '퇴실';
+      document.getElementById('modalConfirm').style.background = mode === 'checkin' ? '#2a9d8f' : '#d97706';
+      document.getElementById('formModal').classList.remove('hidden');
+      clearInputs();
+    }
+
+    function closeModal() {
+      document.getElementById('formModal').classList.add('hidden');
+    }
+
+    function clearInputs() {
+      ['inp-grade','inp-class','inp-number','inp-name','inp-password'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+    }
+
+    function showAlert(msg) {
+      document.getElementById('alertMsg').textContent = msg;
+      document.getElementById('alertModal').classList.remove('hidden');
+    }
+
+    function closeAlert() {
+      document.getElementById('alertModal').classList.add('hidden');
+    }
+
+    function getStudentId(grade, cls, num, name) {
+      return `${grade}-${cls}-${num}-${name}`;
+    }
+
+    document.getElementById('modalConfirm').addEventListener('click', async () => {
+      const grade = document.getElementById('inp-grade').value.trim();
+      const cls = document.getElementById('inp-class').value.trim();
+      const num = document.getElementById('inp-number').value.trim();
+      const name = document.getElementById('inp-name').value.trim();
+      const pw = document.getElementById('inp-password').value.trim();
+
+      if (!grade || !cls || !num || !name || !pw) {
+        showAlert('모든 항목을 입력해주세요.');
+        return;
+      }
+
+      const studentId = getStudentId(grade, cls, num, name);
+
+      if (currentMode === 'checkin') {
+        await db.collection('checkins').doc(studentId).set({
+          grade, class: cls, number: num, name, password: pw,
+          checkinTime: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        closeModal();
+        showAlert('입실 완료! 열공하세요 💪');
+      } else {
+        // Checkout
+        const doc = await db.collection('checkins').doc(studentId).get();
+        if (!doc.exists) {
+          closeModal();
+          showAlert('입실 정보가 없습니다.');
+          return;
+        }
+        const data = doc.data();
+        if (data.password !== pw) {
+          showAlert('비밀번호를 확인하세요.');
+          return;
+        }
+        const checkinTime = data.checkinTime.toDate();
+        const now = new Date();
+        const diffMs = now - checkinTime;
+        const diffMin = Math.floor(diffMs / 60000);
+
+        // Accumulate time
+        const timeRef = db.collection('accumulated').doc(studentId);
+        const timeDoc = await timeRef.get();
+        let total = diffMin;
+        if (timeDoc.exists) {
+          total += timeDoc.data().totalMinutes || 0;
+        }
+        await timeRef.set({ grade, class: cls, number: num, name, totalMinutes: total });
+
+        // Remove checkin record
+        await db.collection('checkins').doc(studentId).delete();
+
+        closeModal();
+        const hrs = Math.floor(diffMin / 60);
+        const mins = diffMin % 60;
+        showAlert(`퇴실 완료! 오늘 공부시간: ${hrs > 0 ? hrs + '시간 ' : ''}${mins}분\n누적: ${Math.floor(total/60) > 0 ? Math.floor(total/60) + '시간 ' : ''}${total%60}분`);
+      }
+    });
+
+    function openTimeModal() {
+      document.getElementById('timeModal').classList.remove('hidden');
+      document.getElementById('timeResult').classList.add('hidden');
+      ['time-grade','time-class','time-number','time-name'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+    }
+
+    async function queryTime() {
+      const grade = document.getElementById('time-grade').value.trim();
+      const cls = document.getElementById('time-class').value.trim();
+      const num = document.getElementById('time-number').value.trim();
+      const name = document.getElementById('time-name').value.trim();
+      if (!grade || !cls || !num || !name) { showAlert('모든 항목을 입력해주세요.'); return; }
+      const studentId = getStudentId(grade, cls, num, name);
+      const doc = await db.collection('accumulated').doc(studentId).get();
+      const result = document.getElementById('timeResult');
+      if (doc.exists) {
+        const t = doc.data().totalMinutes || 0;
+        result.textContent = `누적 공부시간: ${Math.floor(t/60) > 0 ? Math.floor(t/60) + '시간 ' : ''}${t%60}분`;
+      } else {
+        result.textContent = '기록이 없습니다.';
+      }
+      result.classList.remove('hidden');
+    }
+
+    async function openRankingModal() {
+      document.getElementById('rankingModal').classList.remove('hidden');
+      const querySnap = await db.collection('accumulated').get();
+      const records = [];
+      querySnap.forEach(doc => {
+        records.push(doc.data());
+      });
+      records.sort((a, b) => (b.totalMinutes || 0) - (a.totalMinutes || 0));
+      const top10 = records.slice(0, 10);
+      const rankingList = document.getElementById('rankingList');
+      rankingList.innerHTML = '';
+      top10.forEach((record, idx) => {
+        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}위`;
+        const mins = record.totalMinutes || 0;
+        const timeStr = `${Math.floor(mins/60) > 0 ? Math.floor(mins/60) + '시간 ' : ''}${mins%60}분`;
+        const item = document.createElement('div');
+        item.className = 'p-3 rounded-lg shadow-sm text-sm';
+        item.style.background = '#f3f4f6';
+        item.textContent = `${medal} ${record.grade}학년 ${record.class}반 ${record.name} - ${timeStr}`;
+        rankingList.appendChild(item);
+      });
+      if (top10.length === 0) {
+        rankingList.innerHTML = '<p class="text-center text-gray-500 py-4">아직 기록이 없습니다.</p>';
+      }
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a112eb4660deea1c',t:'MTc4MjM3OTQ2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
