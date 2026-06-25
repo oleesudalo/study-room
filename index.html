@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const app = initializeApp(firebaseConfig);
+const firebaseConfig = {
+  apiKey: "AIzaSyAcY8A8MvbKoeh8H1FVwsxkmTkKT4gii-U",
+  authDomain: "dongmyeong-study.firebaseapp.com",
+  projectId: "dongmyeong-study",
+  storageBucket: "dongmyeong-study.firebasestorage.app",
+  messagingSenderId: "1072114866393",
+  appId: "1:1072114866393:web:a162826ab92f7e610706c8"
+};
+
+// 앱 초기화 확인
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const appId = "dongmyeong-study";
 
 export default function App() {
   const [activeModal, setActiveModal] = useState(null);
@@ -19,7 +28,9 @@ export default function App() {
   const [recordResult, setRecordResult] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
 
-  useEffect(() => { signInAnonymously(auth); }, []);
+  useEffect(() => {
+    signInAnonymously(auth).catch((err) => console.error("인증 오류 발생:", err));
+  }, []);
 
   useEffect(() => {
     if (statusMessage) {
@@ -42,7 +53,7 @@ export default function App() {
       if (docSnap.exists() && docSnap.data().status === 'in') return setStatusMessage("이미 입실 상태입니다.");
       await setDoc(docRef, { grade, classNum, studentNum, name, password, status: 'in', lastEntryTime: Date.now(), totalStudyTime: docSnap.exists() ? docSnap.data().totalStudyTime : 0 }, {merge: true});
       setStatusMessage(`${name}님, 입실 완료!`);
-    } catch (e) { setStatusMessage("연결 실패: 규칙을 확인하세요."); }
+    } catch (e) { setStatusMessage("연결 실패: Firebase 설정을 확인하세요."); }
   };
 
   const handleCheckOut = async () => {
@@ -70,60 +81,52 @@ export default function App() {
   const formatTime = (ms) => `${Math.floor(ms / 3600000)}시간 ${Math.floor((ms % 3600000) / 60000)}분`;
 
   return (
-    <div className="bg-gray-100 min-h-screen flex items-center justify-center p-2 font-sans">
-      <div className="bg-white w-full max-w-sm rounded-2xl p-4 shadow-lg flex flex-col gap-4">
+    <div className="bg-gray-100 min-h-screen flex items-center justify-center p-2 font-sans overflow-hidden">
+      <div className="bg-white w-full max-w-[320px] rounded-2xl p-4 shadow-lg flex flex-col gap-3">
         {statusMessage && (
-          <div className="bg-blue-600 text-white p-3 rounded-lg text-center font-bold text-sm fixed top-2 left-2 right-2 z-[100] shadow-xl">
+          <div className="bg-blue-600 text-white p-2 rounded-lg text-center font-bold text-xs fixed top-2 left-2 right-2 z-[100] shadow-xl">
             {statusMessage}
           </div>
         )}
-        
-        <div className="flex justify-center"><div className="bg-blue-50 text-blue-600 font-bold px-3 py-0.5 rounded-full text-[10px] tracking-widest">✏️ STUDY PROJECT ✏️</div></div>
-        <h1 className="text-xl font-black text-center text-blue-900">동명 열공 프로젝트</h1>
-        <p className="text-center text-gray-500 text-[10px]">같이 공부하면 더 재밌어! 5일 완주 도전 🌟</p>
-        
+        <div className="flex justify-center"><div className="bg-blue-50 text-blue-600 font-bold px-3 py-0.5 rounded-full text-[9px] tracking-widest">✏️ STUDY PROJECT ✏️</div></div>
+        <h1 className="text-lg font-black text-center text-blue-900">동명 열공 프로젝트</h1>
+        <p className="text-center text-gray-500 text-[9px]">같이 공부하면 더 재밌어! 5일 완주 도전 🌟</p>
         <div className="bg-blue-800 text-white p-3 rounded-xl text-center">
-            <div className="text-[9px] opacity-80 mb-0.5">🗓 일정</div>
-            <div className="font-bold text-xs">6월 29일(월) ~ 7월 3일(금)</div>
+            <div className="text-[8px] opacity-80 mb-0.5">🗓 일정</div>
+            <div className="font-bold text-[11px]">6월 29일(월) ~ 7월 3일(금)</div>
             <div className="text-[8px] opacity-75 mt-0.5">5일간 진행 / 매일 12:35 ~ 1:25 (50분)</div>
         </div>
-
         <div className="flex gap-1">
-            <div className="flex-1 bg-green-50 p-2 rounded-lg border text-center text-green-800 font-bold text-[10px]">학생 자치회실</div>
-            <div className="flex-1 bg-blue-50 p-2 rounded-lg border text-center text-blue-800 font-bold text-[10px]">학교 도서실</div>
+            <div className="flex-1 bg-green-50 p-2 rounded-lg border text-center text-green-800 font-bold text-[9px]">학생 자치회실</div>
+            <div className="flex-1 bg-blue-50 p-2 rounded-lg border text-center text-blue-800 font-bold text-[9px]">학교 도서실</div>
         </div>
-
         <div className="space-y-1">
-            <div className="text-[10px] font-bold text-gray-600">⚠️ 참가 규칙</div>
-            <div className="bg-green-50 p-1.5 rounded border-l-2 border-green-500 text-[9px]">🚫 친구 자리 맞추기 금지</div>
-            <div className="bg-gray-50 p-1.5 rounded border-l-2 border-gray-500 text-[9px]">🪑 자리 이탈 금지</div>
-            <div className="bg-red-50 p-1.5 rounded border-l-2 border-red-500 text-[9px]">🔴 경고 2회 시 강퇴</div>
+            <div className="text-[9px] font-bold text-gray-600">⚠️ 참가 규칙</div>
+            <div className="bg-green-50 p-1 rounded border-l-2 border-green-500 text-[8px]">🚫 친구 자리 맞추기 금지</div>
+            <div className="bg-gray-50 p-1 rounded border-l-2 border-gray-500 text-[8px]">🪑 자리 이탈 금지</div>
+            <div className="bg-red-50 p-1 rounded border-l-2 border-red-500 text-[8px]">🔴 경고 2회 시 강퇴</div>
         </div>
-
         <div className="grid grid-cols-3 gap-1 mt-auto">
           <button onClick={() => setActiveModal('in')} className="bg-blue-600 text-white font-bold py-2 rounded-lg text-[10px]">입실</button>
           <button onClick={() => setActiveModal('out')} className="bg-red-500 text-white font-bold py-2 rounded-lg text-[10px]">퇴실</button>
           <button onClick={() => setActiveModal('time')} className="bg-emerald-600 text-white font-bold py-2 rounded-lg text-[10px]">누적 시간</button>
         </div>
-
         {activeModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-3 z-50">
-            <div className="bg-white p-4 rounded-xl w-full max-w-[280px] space-y-3 shadow-2xl">
-              <h2 className="font-bold text-sm">정보 입력</h2>
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-2 z-50">
+            <div className="bg-white p-3 rounded-xl w-full max-w-[240px] space-y-2 shadow-2xl">
+              <h2 className="font-bold text-xs">정보 입력</h2>
               <div className="flex gap-1">
-                <select onChange={e=>setGrade(e.target.value)} className="border p-1 rounded w-full text-[10px]"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
-                <input type="number" onChange={e=>setClassNum(e.target.value)} placeholder="반" className="border p-1 rounded w-12 text-[10px]"/>
-                <input type="number" onChange={e=>setStudentNum(e.target.value)} placeholder="번호" className="border p-1 rounded w-12 text-[10px]"/>
+                <select onChange={e=>setGrade(e.target.value)} className="border p-1 rounded w-full text-[9px]"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
+                <input type="number" onChange={e=>setClassNum(e.target.value)} placeholder="반" className="border p-1 rounded w-10 text-[9px]"/>
+                <input type="number" onChange={e=>setStudentNum(e.target.value)} placeholder="번호" className="border p-1 rounded w-10 text-[9px]"/>
               </div>
-              {(activeModal === 'in' || activeModal === 'out') && <input type="text" onChange={e=>setName(e.target.value)} placeholder="이름" className="w-full border p-1 rounded text-[10px]"/>}
-              <input type="password" onChange={e=>setPassword(e.target.value)} placeholder="비밀번호(4자리)" className="w-full border p-1 rounded text-[10px]"/>
-              
-              {activeModal === 'in' && <button onClick={handleCheckIn} className="w-full bg-blue-600 text-white py-1.5 rounded text-[10px] font-bold">입실 확인</button>}
-              {activeModal === 'out' && <button onClick={handleCheckOut} className="w-full bg-red-600 text-white py-1.5 rounded text-[10px] font-bold">퇴실 확인</button>}
-              {activeModal === 'time' && <button onClick={handleViewRecord} className="w-full bg-emerald-600 text-white py-1.5 rounded text-[10px] font-bold">조회</button>}
-              
-              {recordResult && <div className="text-center font-bold text-[10px] p-2 bg-gray-100 rounded">{formatTime(recordResult.total)}</div>}
-              <button onClick={() => {setActiveModal(null); setRecordResult(null);}} className="w-full bg-gray-200 py-1.5 rounded text-[10px]">닫기</button>
+              {(activeModal === 'in' || activeModal === 'out') && <input type="text" onChange={e=>setName(e.target.value)} placeholder="이름" className="w-full border p-1 rounded text-[9px]"/>}
+              <input type="password" onChange={e=>setPassword(e.target.value)} placeholder="비밀번호(4자리)" className="w-full border p-1 rounded text-[9px]"/>
+              {activeModal === 'in' && <button onClick={handleCheckIn} className="w-full bg-blue-600 text-white py-1 rounded text-[9px] font-bold">입실 확인</button>}
+              {activeModal === 'out' && <button onClick={handleCheckOut} className="w-full bg-red-600 text-white py-1 rounded text-[9px] font-bold">퇴실 확인</button>}
+              {activeModal === 'time' && <button onClick={handleViewRecord} className="w-full bg-emerald-600 text-white py-1 rounded text-[9px] font-bold">조회</button>}
+              {recordResult && <div className="text-center font-bold text-[9px] p-1.5 bg-gray-100 rounded">{formatTime(recordResult.total)}</div>}
+              <button onClick={() => {setActiveModal(null); setRecordResult(null);}} className="w-full bg-gray-200 py-1 rounded text-[9px]">닫기</button>
             </div>
           </div>
         )}
