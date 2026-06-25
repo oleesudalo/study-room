@@ -28,6 +28,9 @@
 
     window.toggleModal = (show, type) => { 
         document.getElementById('modalType').value = type;
+        document.getElementById('resultArea').classList.add('hidden');
+        document.getElementById('inputArea').classList.remove('hidden');
+        
         if(show) {
             document.getElementById('name').value = '';
             document.getElementById('password').value = '';
@@ -37,6 +40,12 @@
             document.getElementById('passwordContainer').style.display = type === 'time' ? 'none' : 'block';
         }
         document.getElementById('modal').style.display = show ? 'flex' : 'none'; 
+    };
+
+    window.showResult = (message) => {
+        document.getElementById('inputArea').classList.add('hidden');
+        document.getElementById('resultArea').classList.remove('hidden');
+        document.getElementById('resultMessage').innerText = message;
     };
 
     window.processAction = async () => {
@@ -53,27 +62,24 @@
       try {
         const snap = await getDoc(studentRef);
         if (type === 'time') {
-            if (!snap.exists()) { alert("등록된 학생 정보가 없습니다."); return; }
+            if (!snap.exists()) { showResult("등록된 학생 정보가 없습니다."); return; }
             const total = snap.data().totalMinutes || 0;
-            const hours = Math.floor(total / 60);
-            const mins = total % 60;
-            alert(`총 누적 시간: ${hours}시간 ${mins}분`);
+            showResult(`총 누적 시간: ${Math.floor(total / 60)}시간 ${total % 60}분`);
         } else {
             if (type === 'in') {
-                if (snap.exists() && snap.data().status === "in") { alert("입실중입니다."); return; }
+                if (snap.exists() && snap.data().status === "in") { showResult("이미 입실중입니다."); return; }
                 await setDoc(studentRef, { name, grade, classNum, studentNum, password, status: "in", lastIn: new Date().toISOString(), totalMinutes: snap.exists() ? (snap.data().totalMinutes || 0) : 0 });
-                alert(name + "님, 입실 완료!");
+                showResult(name + "님, 입실 완료!");
             } else {
-                if (!snap.exists() || snap.data().status !== "in") { alert("입실 내역이 없습니다."); return; }
-                if (snap.data().password !== password) { alert("비밀번호가 다릅니다."); return; }
+                if (!snap.exists() || snap.data().status !== "in") { showResult("입실 내역이 없습니다."); return; }
+                if (snap.data().password !== password) { showResult("비밀번호가 다릅니다."); return; }
                 const diff = Math.floor((new Date() - new Date(snap.data().lastIn)) / 60000);
                 const newTotal = (snap.data().totalMinutes || 0) + diff;
                 await setDoc(studentRef, { ...snap.data(), status: "out", totalMinutes: newTotal, lastOut: new Date().toISOString() });
-                alert("퇴실되었습니다! 총 누적 시간: " + Math.floor(newTotal/60) + "시간 " + (newTotal%60) + "분");
+                showResult("퇴실되었습니다!\n총 누적 시간: " + Math.floor(newTotal/60) + "시간 " + (newTotal%60) + "분");
             }
         }
-        toggleModal(false);
-      } catch (e) { alert("오류: " + e.message); }
+      } catch (e) { showResult("오류: " + e.message); }
     };
   </script>
 </head>
@@ -119,17 +125,24 @@
   <div id="modal" class="absolute inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4">
     <input type="hidden" id="modalType">
     <div class="bg-white rounded-2xl w-full max-w-sm p-6 space-y-3">
-      <h2 class="font-bold text-lg mb-2">정보 입력</h2>
-      <div class="flex gap-2">
-        <select id="grade" class="flex-1 p-2 border rounded"><option>1학년</option><option>2학년</option><option>3학년</option></select>
-        <input type="number" id="classNum" placeholder="반" class="w-16 p-2 border rounded">
-        <input type="number" id="studentNum" placeholder="번호" class="w-16 p-2 border rounded">
+      <div id="inputArea">
+        <h2 class="font-bold text-lg mb-2">정보 입력</h2>
+        <div class="flex gap-2">
+          <select id="grade" class="flex-1 p-2 border rounded"><option>1학년</option><option>2학년</option><option>3학년</option></select>
+          <input type="number" id="classNum" placeholder="반" class="w-16 p-2 border rounded">
+          <input type="number" id="studentNum" placeholder="번호" class="w-16 p-2 border rounded">
+        </div>
+        <div id="nameContainer"><input type="text" id="name" placeholder="이름" class="w-full p-2 border rounded"></div>
+        <div id="passwordContainer"><input type="password" id="password" placeholder="비밀번호(4자리)" class="w-full p-2 border rounded"></div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="processAction()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold">확인</button>
+          <button onclick="toggleModal(false)" class="flex-1 bg-gray-200 py-2 rounded">취소</button>
+        </div>
       </div>
-      <div id="nameContainer"><input type="text" id="name" placeholder="이름" class="w-full p-2 border rounded"></div>
-      <div id="passwordContainer"><input type="password" id="password" placeholder="비밀번호(4자리)" class="w-full p-2 border rounded"></div>
-      <div class="flex gap-2 pt-2">
-        <button onclick="processAction()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold">확인</button>
-        <button onclick="toggleModal(false)" class="flex-1 bg-gray-200 py-2 rounded">취소</button>
+      <div id="resultArea" class="hidden text-center space-y-4">
+        <h2 class="font-bold text-lg">결과 확인</h2>
+        <div id="resultMessage" class="p-4 bg-gray-50 rounded-lg text-sm font-medium text-gray-800 whitespace-pre-line"></div>
+        <button onclick="toggleModal(false)" class="w-full bg-blue-600 text-white py-2 rounded font-bold">확인</button>
       </div>
     </div>
   </div>
