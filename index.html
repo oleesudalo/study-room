@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import React, { useState, useEffect } from 'react';
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyAcY8A8MvbKoeh8H1FVwsxkmTkKT4gii-U",
+  authDomain: "dongmyeong-study.firebaseapp.com",
+  projectId: "dongmyeong-study",
+  storageBucket: "dongmyeong-study.firebasestorage.app",
+  messagingSenderId: "1072114866393",
+  appId: "1:1072114866393:web:a162826ab92f7e610706c8"
+};
+
+// 앱 초기화 로직 보완
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const appId = "dongmyeong-study";
 
 export default function App() {
   const [activeModal, setActiveModal] = useState(null);
@@ -17,6 +25,24 @@ export default function App() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [recordResult, setRecordResult] = useState(null);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  // 인증 모듈을 컴포넌트 내부에서 안전하게 호출
+  useEffect(() => {
+    const auth = getAuth(app);
+    signInAnonymously(auth).catch(() => {}); 
+  }, []);
+
+  useEffect(() => {
+    if (statusMessage) {
+      const timer = setTimeout(() => {
+        setStatusMessage('');
+        setActiveModal(null);
+        setRecordResult(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
 
   const getDocId = () => `${grade}-${classNum}-${studentNum}`;
 
@@ -25,11 +51,10 @@ export default function App() {
     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', docId);
     try {
       const docSnap = await getDoc(docRef);
-      if (docSnap.exists() && docSnap.data().status === 'in') return alert("이미 입실 상태입니다.");
+      if (docSnap.exists() && docSnap.data().status === 'in') return setStatusMessage("이미 입실 상태입니다.");
       await setDoc(docRef, { grade, classNum, studentNum, name, password, status: 'in', lastEntryTime: Date.now(), totalStudyTime: docSnap.exists() ? docSnap.data().totalStudyTime : 0 }, {merge: true});
-      alert(`${name} 학생, 입실 완료!`);
-      setActiveModal(null);
-    } catch (e) { alert("입실 기능을 연동해 주세요! (Firebase 규칙 확인 필요)"); }
+      setStatusMessage(`${name}님, 입실 완료!`);
+    } catch (e) { setStatusMessage("데이터 연결 오류 발생"); }
   };
 
   const handleCheckOut = async () => {
@@ -37,14 +62,12 @@ export default function App() {
     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', docId);
     try {
       const docSnap = await getDoc(docRef);
-      if (!docSnap.exists() || docSnap.data().status !== 'in') return alert("입실 내역이 없습니다.");
-      const data = docSnap.data();
-      if (data.password !== password) return alert("비밀번호 불일치");
-      const newTotal = data.totalStudyTime + (Date.now() - data.lastEntryTime);
+      if (!docSnap.exists() || docSnap.data().status !== 'in') return setStatusMessage("입실 내역이 없습니다.");
+      if (docSnap.data().password !== password) return setStatusMessage("비밀번호가 다릅니다.");
+      const newTotal = docSnap.data().totalStudyTime + (Date.now() - docSnap.data().lastEntryTime);
       await updateDoc(docRef, { status: 'out', totalStudyTime: newTotal, lastEntryTime: null });
-      alert("퇴실 완료!");
-      setActiveModal(null);
-    } catch (e) { alert("오류 발생"); }
+      setStatusMessage("퇴실 완료!");
+    } catch (e) { setStatusMessage("데이터 처리 오류"); }
   };
 
   const handleViewRecord = async () => {
@@ -52,9 +75,8 @@ export default function App() {
     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', docId);
     const docSnap = await getDoc(docRef);
     if (!docSnap.exists()) return setRecordResult({ total: 0 });
-    const data = docSnap.data();
-    if (data.password !== password) return alert("비밀번호 불일치");
-    setRecordResult({ total: data.status === 'in' ? data.totalStudyTime + (Date.now() - data.lastEntryTime) : data.totalStudyTime });
+    if (docSnap.data().password !== password) return setStatusMessage("비밀번호가 다릅니다.");
+    setRecordResult({ total: docSnap.data().status === 'in' ? docSnap.data().totalStudyTime + (Date.now() - docSnap.data().lastEntryTime) : docSnap.data().totalStudyTime });
   };
 
   const formatTime = (ms) => `${Math.floor(ms / 3600000)}시간 ${Math.floor((ms % 3600000) / 60000)}분`;
@@ -62,32 +84,22 @@ export default function App() {
   return (
     <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-xl flex flex-col gap-6">
-        <div className="flex justify-center"><div className="bg-blue-100 text-blue-600 font-bold px-4 py-1 rounded-full text-sm">✏️ STUDY PROJECT ✏️</div></div>
+        {statusMessage && (
+          <div className="bg-blue-600 text-white p-4 rounded-xl text-center font-bold fixed top-4 left-4 right-4 z-[100] shadow-lg animate-bounce">
+            {statusMessage}
+          </div>
+        )}
         <h1 className="text-3xl font-black text-center text-blue-900">동명 열공 프로젝트</h1>
-        <p className="text-center text-gray-500">같이 공부하면 더 재밌어! 5일 완주 도전 🌟</p>
         
         <div className="bg-blue-800 text-white p-5 rounded-2xl text-center">
-            <div className="text-sm opacity-80 mb-1">🗓 일정</div>
             <div className="font-bold text-lg">6월 29일(월) ~ 7월 3일(금)</div>
-            <div className="text-xs opacity-75 mt-1">5일간 진행 / 매일 12:35 ~ 1:25 (50분)</div>
-        </div>
-
-        <div className="flex gap-2">
-            <div className="flex-1 bg-green-50 p-3 rounded-xl border border-green-200 text-center text-green-800 font-bold text-sm">학생 자치회실<br/><span className="text-[10px] text-green-600">Student Council Room</span></div>
-            <div className="flex-1 bg-blue-50 p-3 rounded-xl border border-blue-200 text-center text-blue-800 font-bold text-sm">학교 도서실<br/><span className="text-[10px] text-blue-600">School Library</span></div>
-        </div>
-
-        <div className="space-y-2">
-            <div className="text-sm font-bold text-gray-500">⚠️ 참가 규칙</div>
-            <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-500 text-sm">🚫 친구 자리 맞추기 금지</div>
-            <div className="bg-gray-50 p-3 rounded-lg border-l-4 border-gray-500 text-sm">🪑 자리 이탈 금지</div>
-            <div className="bg-red-50 p-3 rounded-lg border-l-4 border-red-500 text-sm">🔴 경고 2회 시 강퇴</div>
+            <div className="text-xs opacity-75 mt-1">매일 12:35 ~ 1:25 (50분)</div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-auto">
           <button onClick={() => setActiveModal('in')} className="bg-blue-600 text-white font-bold py-4 rounded-xl">입실</button>
           <button onClick={() => setActiveModal('out')} className="bg-red-500 text-white font-bold py-4 rounded-xl">퇴실</button>
-          <button onClick={() => setActiveModal('time')} className="bg-emerald-600 text-white font-bold py-4 rounded-xl">누적 시간</button>
+          <button onClick={() => setActiveModal('time')} className="bg-emerald-600 text-white font-bold py-4 rounded-xl">시간조회</button>
         </div>
 
         {activeModal && (
@@ -102,8 +114,7 @@ export default function App() {
               {(activeModal === 'in' || activeModal === 'out') && <input type="text" onChange={e=>setName(e.target.value)} placeholder="이름" className="w-full border p-2 rounded"/>}
               <input type="password" onChange={e=>setPassword(e.target.value)} placeholder="비밀번호(4자리)" className="w-full border p-2 rounded"/>
               {activeModal === 'in' && <button onClick={handleCheckIn} className="w-full bg-blue-600 text-white py-2 rounded font-bold">입실 확인</button>}
-              {activeModal === 'out' && <button onClick={handleCheckOut} className="w-full bg-red-600 text-white py-2 rounded font-bold">퇴실 확인</button>}
-              {activeModal === 'time' && <button onClick={handleViewRecord} className="w-full bg-emerald-600 text-white py-2 rounded font-bold">조회</button>}
+              {activeModal && activeModal !== 'in' && <button onClick={activeModal === 'out' ? handleCheckOut : handleViewRecord} className={`w-full ${activeModal === 'out' ? 'bg-red-600' : 'bg-emerald-600'} text-white py-2 rounded font-bold`}>{activeModal === 'out' ? '퇴실 확인' : '조회'}</button>}
               {recordResult && <div className="text-center font-bold text-lg p-3 bg-gray-100 rounded">{formatTime(recordResult.total)}</div>}
               <button onClick={() => {setActiveModal(null); setRecordResult(null);}} className="w-full bg-gray-200 py-2 rounded">닫기</button>
             </div>
