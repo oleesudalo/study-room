@@ -12,9 +12,8 @@
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Firebase 설정값을 여기에 넣어주세요!
     const firebaseConfig = {
       apiKey: "AIzaSyAcY8A8MvbKoeh8H1FVwsxkmTkKT4gii-U",
   authDomain: "dongmyeong-study.firebaseapp.com",
@@ -27,11 +26,23 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    window.db = db;
-    window.doc = doc;
-    window.getDoc = getDoc;
-    window.setDoc = setDoc;
-    window.updateDoc = updateDoc;
+    // 입실 기록 저장 함수
+    window.handleCheckIn = async () => {
+      const name = document.getElementById('name').value;
+      const id = document.getElementById('studentId').value;
+      if (!name || !id) { alert("이름과 학번을 입력해주세요!"); return; }
+      
+      try {
+        await setDoc(doc(db, "students", id), {
+          name: name,
+          checkIn: new Date().toISOString(),
+          status: "in"
+        });
+        alert(name + "님, 입실 완료되었습니다!");
+      } catch (e) {
+        alert("오류 발생: " + e.message);
+      }
+    };
   </script>
 </head>
 <body>
@@ -42,57 +53,17 @@
     </button>
     
     <div class="flex-grow py-4 px-6 flex flex-col items-center justify-evenly text-center w-full overflow-hidden">
-      <div class="flex flex-col items-center gap-1">
-        <div class="bg-[#3b82f6] text-white text-[10px] font-bold py-1 px-4 rounded-full mb-1 tracking-widest shadow-sm">
-          ✏️ STUDY PROJECT ✏️
-        </div>
-        <h1 class="text-2xl font-black text-[#1e3a8a] tracking-tight leading-tight">동명 열공 프로젝트</h1>
-        <p class="text-gray-500 text-[10px] font-medium">같이 공부하면 더 재밌어! 5일 완주 도전 🌟</p>
-      </div>
-
-      <div class="bg-[#1e4a9e] text-white w-full rounded-2xl p-4 shadow-md">
-        <div class="text-blue-200 text-[10px] mb-1">🗓 일정</div>
-        <div class="text-sm font-bold mb-1">6월 29일(월) ~ 7월 3일(금)</div>
-        <div class="text-[10px] text-blue-100">5일간 진행 / 매일 12:35 ~ 1:25 (50분)</div>
-      </div>
-
-      <div class="w-full flex gap-3">
-        <div class="flex-1 bg-green-50 border-t-4 border-green-600 rounded-xl p-2 text-center">
-          <div class="font-bold text-green-900 text-[11px]">학생 자치회실</div>
-          <div class="text-[9px] text-green-600">Student Council Room</div>
-        </div>
-        <div class="flex-1 bg-blue-50 border-t-4 border-blue-600 rounded-xl p-2 text-center">
-          <div class="font-bold text-blue-900 text-[11px]">학교 도서실</div>
-          <div class="text-[9px] text-blue-600">School Library</div>
-        </div>
-      </div>
-
-      <div class="w-full space-y-2">
-        <div class="text-[10px] font-bold text-gray-600">⚠️ 참가 규칙</div>
-        <div class="bg-green-50/70 border-l-4 border-green-500 rounded-r-lg p-2 text-left">
-          <div class="font-bold text-gray-800 text-[10px]">🚫 친구 자리 맞추기 금지</div>
-          <div class="text-[9px] text-gray-600">친구와 자리를 맞춰 앉는 행위는 허용되지 않습니다</div>
-        </div>
-        <div class="bg-blue-50/70 border-l-4 border-blue-500 rounded-r-lg p-2 text-left">
-          <div class="font-bold text-gray-800 text-[10px]">🪑 자리 이탈 금지</div>
-          <div class="text-[9px] text-gray-600">공부 시간 중 자리를 이탈하는 행위는 금지됩니다</div>
-        </div>
-        <div class="bg-red-50/70 border-l-4 border-red-500 rounded-r-lg p-2 text-left">
-          <div class="font-bold text-gray-800 text-[10px]">🔴 경고 2회 시 강퇴</div>
-          <div class="text-[9px] text-gray-600">규칙 위반 시 경고 누적, 2회 시 퇴장 조치됩니다</div>
-        </div>
-      </div>
-
-      <div class="w-full bg-pink-50 border-t-4 border-[#b92b3a] rounded-xl p-3 text-center">
-        <div class="text-[9px] font-bold text-[#b92b3a] tracking-widest mb-1">🎁 SPECIAL REWARD</div>
-        <div class="text-[13px] font-black text-gray-800">5일 개근 → 응원 간식 선물 🍭🍫🍪</div>
-        <div class="text-[9px] text-gray-600">하루도 빠짐없이 참석한 분께 드리는 특별 선물!</div>
+      <h1 class="text-2xl font-black text-[#1e3a8a]">동명 열공 프로젝트</h1>
+      
+      <div class="w-full space-y-3">
+        <input type="text" id="name" placeholder="이름을 입력하세요" class="w-full p-3 border rounded-xl">
+        <input type="text" id="studentId" placeholder="학번을 입력하세요 (예: 10101)" class="w-full p-3 border rounded-xl">
       </div>
     </div>
 
     <div class="w-full border-t border-gray-100 p-3 flex gap-2">
-      <button onclick="alert('입실 기능을 연동해주세요!')" class="flex-1 bg-blue-600 text-white font-bold text-sm py-3 rounded-xl">자습실 이용</button>
-      <button onclick="alert('누적 시간 기능을 연동해주세요!')" class="flex-[0.8] bg-emerald-600 text-white font-bold text-sm py-3 rounded-xl">누적 시간</button>
+      <button onclick="handleCheckIn()" class="flex-1 bg-blue-600 text-white font-bold text-sm py-3 rounded-xl">입실하기</button>
+      <button onclick="alert('준비 중입니다!')" class="flex-[0.8] bg-emerald-600 text-white font-bold text-sm py-3 rounded-xl">누적 시간</button>
     </div>
   </div>
 
