@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
+// 설정값이 정상적으로 전달되도록 객체로 명시
 const firebaseConfig = {
   apiKey: "AIzaSyAcY8A8MvbKoeh8H1FVwsxkmTkKT4gii-U",
   authDomain: "dongmyeong-study.firebaseapp.com",
@@ -11,6 +12,7 @@ const firebaseConfig = {
   appId: "1:1072114866393:web:a162826ab92f7e610706c8"
 };
 
+// 앱 초기화: 이미 앱이 있다면 가져오고, 없으면 생성
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 const appId = "dongmyeong-study";
@@ -29,8 +31,6 @@ export default function App() {
     if (statusMessage) {
       const timer = setTimeout(() => {
         setStatusMessage('');
-        setActiveModal(null);
-        setRecordResult(null);
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -46,6 +46,7 @@ export default function App() {
       if (docSnap.exists() && docSnap.data().status === 'in') return setStatusMessage("이미 입실 상태입니다.");
       await setDoc(docRef, { grade, classNum, studentNum, name, password, status: 'in', lastEntryTime: Date.now(), totalStudyTime: docSnap.exists() ? docSnap.data().totalStudyTime : 0 }, {merge: true});
       setStatusMessage(`${name}님, 입실 완료!`);
+      setActiveModal(null);
     } catch (e) { setStatusMessage("데이터 연결 오류 발생"); }
   };
 
@@ -59,6 +60,7 @@ export default function App() {
       const newTotal = docSnap.data().totalStudyTime + (Date.now() - docSnap.data().lastEntryTime);
       await updateDoc(docRef, { status: 'out', totalStudyTime: newTotal, lastEntryTime: null });
       setStatusMessage("퇴실 완료!");
+      setActiveModal(null);
     } catch (e) { setStatusMessage("데이터 처리 오류"); }
   };
 
