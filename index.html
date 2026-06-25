@@ -68,15 +68,17 @@
         } else {
             if (type === 'in') {
                 if (snap.exists() && snap.data().status === "in") { showResult("이미 입실중입니다."); return; }
-                await setDoc(studentRef, { name, grade, classNum, studentNum, password, status: "in", lastIn: new Date().toISOString(), totalMinutes: snap.exists() ? (snap.data().totalMinutes || 0) : 0 });
+                const currentTotal = snap.exists() ? (snap.data().totalMinutes || 0) : 0;
+                await setDoc(studentRef, { name, grade, classNum, studentNum, password, status: "in", lastIn: new Date().toISOString(), totalMinutes: currentTotal });
                 showResult(name + "님, 입실 완료!");
             } else {
                 if (!snap.exists() || snap.data().status !== "in") { showResult("입실 내역이 없습니다."); return; }
                 if (snap.data().password !== password) { showResult("비밀번호가 다릅니다."); return; }
                 const diff = Math.floor((new Date() - new Date(snap.data().lastIn)) / 60000);
-                const newTotal = (snap.data().totalMinutes || 0) + diff;
-                await setDoc(studentRef, { ...snap.data(), status: "out", totalMinutes: newTotal, lastOut: new Date().toISOString() });
-                showResult("퇴실되었습니다!\n총 누적 시간: " + Math.floor(newTotal/60) + "시간 " + (newTotal%60) + "분");
+                const currentTotal = snap.data().totalMinutes || 0;
+                const updatedTotal = currentTotal + diff;
+                await setDoc(studentRef, { ...snap.data(), status: "out", totalMinutes: updatedTotal, lastOut: new Date().toISOString() });
+                showResult("퇴실되었습니다!\n총 누적 시간: " + Math.floor(updatedTotal/60) + "시간 " + (updatedTotal%60) + "분");
             }
         }
       } catch (e) { showResult("오류: " + e.message); }
