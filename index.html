@@ -1,132 +1,156 @@
 <!doctype html>
 <html lang="ko">
- <head><script src="/_sdk/telemetry_sdk.js"></script>
+ <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>동명 열공 프로젝트</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Noto Sans KR', sans-serif; }
     .dot-decoration { width: 80px; height: 80px; border-radius: 50%; position: absolute; opacity: 0.3; }
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 50; }
-    .modal-box { background: #fff; border-radius: 16px; padding: 24px; width: 90%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-    .modal-box input { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; font-size: 14px; }
-    .modal-box input:focus { outline: none; border-color: #2a9d8f; }
+    .modal-box { background: #fff; border-radius: 16px; padding: 24px; width: 90%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
     .alert-box { background: #fff; border-radius: 12px; padding: 20px; text-align: center; width: 85%; max-width: 300px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    .step-btn { border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px 8px; font-weight: 700; font-size: 16px; transition: all 0.15s; }
+    .step-btn:hover { border-color: #2a9d8f; background: #f0fdfa; }
+    .step-btn.selected { border-color: #2a9d8f; background: #2a9d8f; color: #fff; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
-  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
  </head>
- <body data-template-id="__page-root" class="w-full overflow-hidden" style="height: calc(100 * min(var(--vh, 1vh), 1vh));">
+ <body class="w-full overflow-hidden" style="height: 100vh;">
   <div class="relative w-full h-full flex flex-col" style="background: #e8f4f8;">
    <div class="dot-decoration bg-blue-300" style="top:-20px;left:-20px;width:100px;height:100px;"></div>
    <div class="dot-decoration bg-pink-200" style="top:60px;right:-30px;width:70px;height:70px;"></div>
    <div class="dot-decoration bg-teal-200" style="top:300px;left:-40px;width:90px;height:90px;"></div>
    <div class="dot-decoration bg-yellow-200" style="bottom:200px;right:-20px;width:60px;height:60px;"></div>
+   
    <div class="relative z-10 px-3 flex-1 flex flex-col items-center w-full overflow-y-auto" style="padding-top:40px;padding-bottom:100px;">
-    <div class="absolute top-7 right-3 z-20"><button data-template-id="button-fullscreen" class="canva-button rounded-lg p-2 text-xs font-bold shadow-sm" style="background:#6366f1;color:#fff;" onclick="toggleFullscreen()" title="전체화면"> <i data-lucide="maximize-2" style="width: 18px; height: 18px;"></i> </button>
+    <div class="absolute top-7 right-3 z-20">
+      <button class="rounded-lg p-2 text-xs font-bold shadow-sm" style="background:#6366f1;color:#fff;" onclick="toggleFullscreen()" title="전체화면"> 
+        <i data-lucide="maximize-2" style="width:18px;height:18px;"></i> 
+      </button>
     </div>
-    <header class="mb-4"><span data-template-id="badge" class="canva-tag inline-block px-6 py-2 rounded-full text-lg font-medium border-2" style="color:#2a9d8f;border-color:#2a9d8f;">STUDY PROJECT</span>
+    
+    <header class="mb-4">
+      <span class="inline-block px-6 py-2 rounded-full text-lg font-medium border-2" style="color:#2a9d8f;border-color:#2a9d8f;">STUDY PROJECT</span>
     </header>
-    <h1 data-template-id="main-title" class="canva-text text-center font-black leading-tight mb-4" style="color:#1a3a4a;font-size:52px;">동명 열공 프로젝트</h1>
-    <p data-template-id="subtitle" class="canva-text text-center mb-6" style="color:#5a7a8a;font-size:22px;">같이 공부하면 더 재밌어! 5일 완주 도전</p>
+    
+    <h1 class="text-center font-black leading-tight mb-4" style="color:#1a3a4a;font-size:52px;">동명 열공 프로젝트</h1>
+    <p class="text-center mb-6" style="color:#5a7a8a;font-size:22px;">같이 공부하면 더 재밌어! 5일 완주 도전</p>
+    
     <section class="w-full mb-5">
-     <div class="flex items-center justify-center gap-3 mb-3"><span class="text-4xl">📅</span>
-      <h2 data-template-id="schedule-label" class="canva-text font-bold text-center" style="color:#1a3a4a;font-size:32px;">일정</h2>
+     <div class="flex items-center justify-center gap-3 mb-3">
+      <span class="text-4xl">📅</span>
+      <h2 class="font-bold text-center" style="color:#1a3a4a;font-size:32px;">일정</h2>
      </div>
-     <div data-template-id="schedule-card" class="canva-card rounded-xl p-5 text-center shadow-sm bg-white">
-      <p data-template-id="schedule-dates" class="canva-text font-bold mb-3" style="color:#1a3a4a;font-size:24px;">6월 29일(월) ~ 7월 3일(금)</p>
-      <p data-template-id="schedule-duration" class="canva-text mb-3" style="color:#5a7a8a;font-size:20px;">5일간 진행</p>
-      <p data-template-id="schedule-time" class="canva-text" style="color:#5a7a8a;font-size:20px;">매일 12:35 ~ 1:25 (50분)</p>
+     <div class="rounded-xl p-5 text-center shadow-sm bg-white">
+      <p class="font-bold mb-3" style="color:#1a3a4a;font-size:24px;">6월 29일(월) ~ 7월 3일(금)</p>
+      <p class="mb-3" style="color:#5a7a8a;font-size:20px;">5일간 진행</p>
+      <p style="color:#5a7a8a;font-size:20px;">매일 12:35 ~ 1:25 (50분)</p>
      </div>
     </section>
+    
     <section class="w-full mb-5">
-     <div class="flex items-center justify-center gap-3 mb-3"><span class="text-4xl">📍</span>
-      <h2 data-template-id="location-label" class="canva-text font-bold text-center" style="color:#1a3a4a;font-size:32px;">장소</h2>
+     <div class="flex items-center justify-center gap-3 mb-3">
+      <span class="text-4xl">📍</span>
+      <h2 class="font-bold text-center" style="color:#1a3a4a;font-size:32px;">장소</h2>
      </div>
      <div class="grid grid-cols-2 gap-4">
-      <div data-template-id="location-card-1" class="canva-card rounded-xl p-4 text-center shadow-sm bg-white">
+      <div class="rounded-xl p-4 text-center shadow-sm bg-white">
        <p class="text-4xl mb-3">🏫</p>
-       <p data-template-id="location-1-name" class="canva-text font-bold" style="color:#1a3a4a;font-size:18px;">학생 자치회실</p>
+       <p class="font-bold" style="color:#1a3a4a;font-size:18px;">학생 자치회실</p>
       </div>
-      <div data-template-id="location-card-2" class="canva-card rounded-xl p-4 text-center shadow-sm bg-white">
+      <div class="rounded-xl p-4 text-center shadow-sm bg-white">
        <p class="text-4xl mb-3">📚</p>
-       <p data-template-id="location-2-name" class="canva-text font-bold" style="color:#1a3a4a;font-size:18px;">학교 도서실</p>
+       <p class="font-bold" style="color:#1a3a4a;font-size:18px;">학교 도서실</p>
       </div>
      </div>
     </section>
+    
     <section class="w-full mb-5">
-     <div class="flex items-center justify-center gap-3 mb-3"><span class="text-4xl">⬇️</span>
-      <h2 data-template-id="rules-label" class="canva-text font-bold text-center" style="color:#1a3a4a;font-size:32px;">참가 규칙</h2>
+     <div class="flex items-center justify-center gap-3 mb-3">
+      <span class="text-4xl">⬇️</span>
+      <h2 class="font-bold text-center" style="color:#1a3a4a;font-size:32px;">참가 규칙</h2>
      </div>
      <div class="space-y-3">
-      <div data-template-id="rule-1-card" class="canva-card rounded-xl p-4 shadow-sm bg-white">
-       <p data-template-id="rule-1-title" class="canva-text font-bold mb-2" style="color:#1a3a4a;font-size:18px;">🚫 친구 자리 맞추기 금지</p>
-       <p data-template-id="rule-1-desc" class="canva-text" style="color:#5a7a8a;font-size:16px;">친구와 자리를 맞춰 앉는 행위는 허용되지 않습니다.</p>
+      <div class="rounded-xl p-4 shadow-sm bg-white">
+       <p class="font-bold mb-2" style="color:#1a3a4a;font-size:18px;">🚫 친구 자리 맞추기 금지</p>
+       <p style="color:#5a7a8a;font-size:16px;">친구와 자리를 맞춰 앉는 행위는 허용되지 않습니다.</p>
       </div>
-      <div data-template-id="rule-2-card" class="canva-card rounded-xl p-4 shadow-sm bg-white">
-       <p data-template-id="rule-2-title" class="canva-text font-bold mb-2" style="color:#1a3a4a;font-size:18px;">🪑 자리 이탈 금지</p>
-       <p data-template-id="rule-2-desc" class="canva-text" style="color:#5a7a8a;font-size:16px;">공부 시간 중 자리를 이탈하는 행위는 금지됩니다.</p>
+      <div class="rounded-xl p-4 shadow-sm bg-white">
+       <p class="font-bold mb-2" style="color:#1a3a4a;font-size:18px;">🪑 자리 이탈 금지</p>
+       <p style="color:#5a7a8a;font-size:16px;">공부 시간 중 자리를 이탈하는 행위는 금지됩니다.</p>
       </div>
      </div>
     </section>
-    <div data-template-id="warning-card" class="canva-card w-full rounded-xl p-4 mb-5 shadow-sm text-center" style="background:#fff3cd;">
-     <p data-template-id="warning-title" class="canva-text font-bold mb-2" style="color:#856404;font-size:18px;">⚠️ 경고 2회 시 강퇴</p>
-     <p data-template-id="warning-desc" class="canva-text" style="color:#856404;font-size:16px;">규칙 위반 시 경고 누적, 2회 시 퇴장 조치됩니다.</p>
+    
+    <div class="w-full rounded-xl p-4 mb-5 shadow-sm text-center" style="background:#fff3cd;">
+     <p class="font-bold mb-2" style="color:#856404;font-size:18px;">⚠️ 경고 2회 시 강퇴</p>
+     <p style="color:#856404;font-size:16px;">규칙 위반 시 경고 누적, 2회 시 퇴장 조치됩니다.</p>
     </div>
+    
     <section class="w-full mb-6">
-     <div data-template-id="reward-card" class="canva-card rounded-xl p-5 text-center shadow-sm bg-white">
-      <p data-template-id="reward-label" class="canva-text font-bold mb-3" style="color:#1a3a4a;font-size:20px;">🎁 SPECIAL REWARD</p>
-      <p data-template-id="reward-text" class="canva-text font-bold mb-3" style="color:#1a3a4a;font-size:24px;">5일 개근 → 응원 간식 선물</p>
-      <p data-template-id="reward-subtext" class="canva-text" style="color:#5a7a8a;font-size:18px;">하루도 빠짐없이 참석한 분께 드리는 특별 선물!</p>
+     <div class="rounded-xl p-5 text-center shadow-sm bg-white">
+      <p class="font-bold mb-3" style="color:#1a3a4a;font-size:20px;">🎁 SPECIAL REWARD</p>
+      <p class="font-bold mb-3" style="color:#1a3a4a;font-size:24px;">5일 개근 → 응원 간식 선물</p>
+      <p style="color:#5a7a8a;font-size:18px;">하루도 빠짐없이 참석한 분께 드리는 특별 선물!</p>
      </div>
     </section>
    </div>
+   
    <section class="fixed bottom-0 left-0 right-0 w-full grid grid-cols-4 gap-3 p-3 bg-white border-t border-gray-200 shadow-lg z-30">
-    <button data-template-id="button-checkin" onclick="openModal('checkin')" class="canva-button rounded-lg py-4 px-2 font-bold shadow-sm" style="background:#2a9d8f;color:#fff;font-size:16px;">입실</button> <button data-template-id="button-checkout" onclick="openModal('checkout')" class="canva-button rounded-lg py-4 px-2 font-bold shadow-sm" style="background:#d97706;color:#fff;font-size:16px;">퇴실</button> <button data-template-id="button-time" onclick="openTimeModal()" class="canva-button rounded-lg py-4 px-2 font-bold shadow-sm" style="background:#3b82f6;color:#fff;font-size:16px;">누적시간</button> <button data-template-id="button-ranking" onclick="openRankingModal()" class="canva-button rounded-lg py-4 px-2 font-bold shadow-sm" style="background:#ec4899;color:#fff;font-size:16px;">순위</button>
+    <button onclick="openStepModal('checkin')" class="rounded-lg py-4 px-2 font-bold shadow-sm" style="background:#2a9d8f;color:#fff;font-size:16px;">입실</button> 
+    <button onclick="openStepModal('checkout')" class="rounded-lg py-4 px-2 font-bold shadow-sm" style="background:#d97706;color:#fff;font-size:16px;">퇴실</button> 
+    <button onclick="openStepModal('time')" class="rounded-lg py-4 px-2 font-bold shadow-sm" style="background:#3b82f6;color:#fff;font-size:16px;">누적시간</button> 
+    <button onclick="openRankingModal()" class="rounded-lg py-4 px-2 font-bold shadow-sm" style="background:#ec4899;color:#fff;font-size:16px;">순위</button>
    </section>
-  </div><!-- Check-in/out Modal -->
-  <div id="formModal" class="modal-overlay hidden">
+  </div>
+
+  <!-- Step Selection Modal -->
+  <div id="stepModal" class="modal-overlay hidden">
    <div class="modal-box">
-    <h3 id="modalTitle" class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;"></h3><input id="inp-grade" type="number" placeholder="학년" min="1" max="3"> <input id="inp-class" type="number" placeholder="반" min="1" max="20"> <input id="inp-number" type="number" placeholder="번호" min="1" max="40"> <input id="inp-name" type="text" placeholder="이름"> <input id="inp-password" type="password" placeholder="비밀번호">
-    <div class="flex gap-2 mt-2">
-     <button onclick="closeModal()" class="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-600">취소</button> <button id="modalConfirm" class="flex-1 py-2 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">확인</button>
-    </div>
+    <h3 id="stepTitle" class="font-bold text-lg mb-1 text-center" style="color:#1a3a4a;"></h3>
+    <p id="stepSubtitle" class="text-sm text-center mb-4" style="color:#5a7a8a;"></p>
+    <div id="stepContent"></div>
+    <!-- id를 stepCancel에서 stepBack으로 수정하여 JS 에러 방지 -->
+    <button id="stepBack" class="w-full py-3 rounded-lg text-sm font-medium mt-4" style="background:#e5e7eb;color:#374151;">취소</button>
    </div>
-  </div><!-- Alert Modal -->
+  </div>
+
+  <!-- Alert Modal -->
   <div id="alertModal" class="modal-overlay hidden">
    <div class="alert-box">
-    <p id="alertMsg" class="font-medium text-sm mb-3" style="color:#1a3a4a;"></p><button onclick="closeAlert()" class="px-6 py-2 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">확인</button>
+    <p id="alertMsg" class="font-medium text-sm mb-3" style="color:#1a3a4a;white-space:pre-line;"></p>
+    <button onclick="closeAlert()" class="px-6 py-2 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">확인</button>
    </div>
-  </div><!-- Time Modal -->
-  <div id="timeModal" class="modal-overlay hidden">
-   <div class="modal-box">
-    <h3 class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;">누적시간 조회</h3><input id="time-grade" type="number" placeholder="학년" min="1" max="3"> <input id="time-class" type="number" placeholder="반" min="1" max="20"> <input id="time-number" type="number" placeholder="번호" min="1" max="40"> <input id="time-name" type="text" placeholder="이름">
-    <div id="timeResult" class="text-center text-sm font-medium py-2 hidden" style="color:#2a9d8f;"></div>
-    <div class="flex gap-2 mt-2">
-     <button onclick="document.getElementById('timeModal').classList.add('hidden')" class="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-600">닫기</button> <button onclick="queryTime()" class="flex-1 py-2 rounded-lg text-sm font-bold text-white" style="background:#3b82f6;">조회</button>
-    </div>
-   </div>
-  </div><!-- Ranking Modal -->
+  </div>
+
+  <!-- Ranking Modal -->
   <div id="rankingModal" class="modal-overlay hidden">
-   <div class="modal-box" style="max-width:400px;max-height:500px;overflow-y:auto;">
-    <h3 class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;">🏆 순위</h3>
-    <div id="rankingList" class="space-y-2">
+   <div class="modal-box flex flex-col" style="max-width:400px; max-height:80vh;">
+    <h3 class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;">🏆 순위 및 통계</h3>
+    <!-- 탭 메뉴 -->
+    <div class="flex border-b mb-3 text-sm">
+      <button id="tab-time" class="flex-1 py-2 font-bold border-b-2 border-[#2a9d8f] text-[#2a9d8f]" onclick="switchRankingTab('time')">누적시간</button>
+      <button id="tab-count" class="flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400" onclick="switchRankingTab('count')">참여횟수</button>
+      <button id="tab-perfect" class="flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400" onclick="switchRankingTab('perfect')">개근자</button>
     </div>
-    <div class="flex gap-2 mt-4">
-     <button onclick="document.getElementById('rankingModal').classList.add('hidden')" class="w-full py-2 rounded-lg text-sm font-medium text-white" style="background:#2a9d8f;">닫기</button>
+    <!-- 탭 컨텐츠 (스크롤 영역) -->
+    <div id="rankingContent" class="overflow-y-auto flex-1 mb-2 space-y-2 p-1">
+    </div>
+    <div class="mt-2 pt-2">
+      <button onclick="document.getElementById('rankingModal').classList.add('hidden')" class="w-full py-2 rounded-lg text-sm font-medium text-white shadow-sm" style="background:#2a9d8f;">닫기</button>
     </div>
    </div>
   </div>
-  <script src="/_sdk/editing_sdk.js"></script>
+
   <script>
     lucide.createIcons();
 
-    // Firebase init
+    // Firebase 초기화 코드
     firebase.initializeApp({
       apiKey: "AIzaSyAcY8A8MvbKoeh8H1FVwsxkmTkKT4gii-U",
       authDomain: "dongmyeong-study.firebaseapp.com",
@@ -138,26 +162,379 @@
     const db = firebase.firestore();
 
     let currentMode = '';
+    let stepState = { step: 0, grade: '', cls: '', num: '' };
 
-    function openModal(mode) {
+    function openStepModal(mode) {
       currentMode = mode;
-      document.getElementById('modalTitle').textContent = mode === 'checkin' ? '입실' : '퇴실';
-      document.getElementById('modalConfirm').style.background = mode === 'checkin' ? '#2a9d8f' : '#d97706';
-      document.getElementById('formModal').classList.remove('hidden');
-      clearInputs();
+      stepState = { step: 0, grade: '', cls: '', num: '' };
+      document.getElementById('stepModal').classList.remove('hidden');
+      renderStep();
     }
 
-    function closeModal() {
-      document.getElementById('formModal').classList.add('hidden');
+    function closeStepModal() {
+      document.getElementById('stepModal').classList.add('hidden');
     }
 
-    function clearInputs() {
-      ['inp-grade','inp-class','inp-number','inp-name','inp-password'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
+    function stepGoBackOrClose() {
+      if (stepState.step > 0) {
+        stepState.step--;
+        renderStep();
+      } else {
+        closeStepModal();
+      }
     }
 
-    function showAlert(msg) {
+    function renderStep() {
+      const content = document.getElementById('stepContent');
+      const title = document.getElementById('stepTitle');
+      const subtitle = document.getElementById('stepSubtitle');
+      const backBtn = document.getElementById('stepBack'); 
+      
+      backBtn.textContent = stepState.step === 0 ? '취소' : '이전';
+      backBtn.onclick = stepState.step === 0 ? closeStepModal : stepGoBackOrClose;
+
+      const modeLabel = currentMode === 'checkin' ? '입실' : currentMode === 'checkout' ? '퇴실' : '누적시간 조회';
+
+      if (stepState.step === 0) {
+        title.textContent = modeLabel;
+        subtitle.textContent = '학년을 선택하세요';
+        content.innerHTML = '<div class="grid grid-cols-3 gap-3">' +
+          [1,2,3].map(g => `<button class="step-btn" onclick="selectGrade(${g})">${g}학년</button>`).join('') +
+          '</div>';
+      } else if (stepState.step === 1) {
+        title.textContent = `${stepState.grade}학년`;
+        subtitle.textContent = '반을 선택하세요';
+        content.innerHTML = '<div class="grid grid-cols-4 gap-3">' +
+          [1,2,3,4,5,6,7].map(c => `<button class="step-btn" onclick="selectClass(${c})">${c}반</button>`).join('') +
+          '</div>';
+      } else if (stepState.step === 2) {
+        title.textContent = `${stepState.grade}학년 ${stepState.cls}반`;
+        subtitle.textContent = '번호를 선택하세요';
+        // 수정: 27번까지 출력
+        content.innerHTML = '<div class="grid grid-cols-5 gap-2" style="max-height:240px;overflow-y:auto;">' +
+          Array.from({length:27}, (_,i) => i+1).map(n => `<button class="step-btn text-sm" onclick="selectNumber(${n})">${n}</button>`).join('') +
+          '</div>';
+      } else if (stepState.step === 3) {
+        title.textContent = `${stepState.grade}학년 ${stepState.cls}반 ${stepState.num}번`;
+        subtitle.textContent = '비밀번호 4자리를 입력하세요';
+        // 수정: maxlength="4" 속성 추가 및 숫자만 입력하기 좋게 pattern 추가
+        content.innerHTML = `
+          <input id="step-password" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="비밀번호 4자리" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:12px;font-size:18px;margin-bottom:8px;text-align:center;letter-spacing:0.5em;" onfocus="this.style.borderColor='#2a9d8f'" onblur="this.style.borderColor='#e2e8f0'">
+          <button onclick="submitAction()" class="w-full py-3 rounded-lg text-sm font-bold text-white mt-2" style="background:${currentMode === 'checkin' ? '#2a9d8f' : '#d97706'};">${modeLabel} 완료</button>
+        `;
+        setTimeout(() => document.getElementById('step-password').focus(), 100);
+      }
+    }
+
+    function selectGrade(g) {
+      stepState.grade = g;
+      stepState.step = 1;
+      renderStep();
+    }
+
+    function selectClass(c) {
+      stepState.cls = c;
+      stepState.step = 2;
+      renderStep();
+    }
+
+    function selectNumber(n) {
+      stepState.num = n;
+      if (currentMode === 'time') {
+        closeStepModal();
+        queryTime();
+      } else {
+        stepState.step = 3;
+        renderStep();
+      }
+    }
+
+    function getStudentId(grade, cls, num) {
+      return `${grade}-${cls}-${num}`;
+    }
+
+    async function submitAction() {
+      const pw = document.getElementById('step-password').value.trim();
+      
+      // 수정: 비밀번호 4자리 검증
+      if (pw.length !== 4) { 
+        showAlert('비밀번호 4자리를 정확히 입력해주세요.'); 
+        return; 
+      }
+
+      const { grade, cls, num } = stepState;
+      const studentId = getStudentId(grade, cls, num);
+
+      try {
+        if (currentMode === 'checkin') {
+          // 입실 로직
+          const checkinDoc = await db.collection('checkins').doc(studentId).get();
+          if (checkinDoc.exists) { 
+            closeStepModal(); 
+            showAlert('이미 입실중입니다.'); // 수정: 중복 입실 처리
+            return; 
+          }
+
+          await db.collection('checkins').doc(studentId).set({
+            grade: String(grade), class: String(cls), number: String(num), password: pw,
+            checkinTime: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          
+          closeStepModal();
+          showAlert('입실되었습니다.'); // 수정: 성공 메시지
+        } else {
+          // 퇴실 로직
+          const doc = await db.collection('checkins').doc(studentId).get();
+          if (!doc.exists) { closeStepModal(); showAlert('입실 정보가 없습니다. 먼저 입실해주세요.'); return; }
+          
+          const data = doc.data();
+          if (data.password !== pw) { showAlert('비밀번호가 일치하지 않습니다.'); return; }
+
+          const checkinTime = data.checkinTime.toDate();
+          const now = new Date();
+          const diffMin = Math.floor((now - checkinTime) / 60000);
+
+          const timeRef = db.collection('accumulated').doc(studentId);
+          const timeDoc = await timeRef.get();
+          let total = diffMin;
+          let dailyRecords = {};
+          
+          if (timeDoc.exists) {
+            total += timeDoc.data().totalMinutes || 0;
+            dailyRecords = timeDoc.data().dailyRecords || {};
+          }
+          
+          const today = now.toISOString().split('T')[0];
+          dailyRecords[today] = (dailyRecords[today] || 0) + diffMin;
+          
+          await timeRef.set({ grade: String(grade), class: String(cls), number: String(num), totalMinutes: total, dailyRecords });
+          await db.collection('checkins').doc(studentId).delete();
+
+          closeStepModal();
+          const hrs = Math.floor(diffMin / 60);
+          const mins = diffMin % 60;
+          showAlert(`퇴실 완료!\n이번 공부시간: ${hrs > 0 ? hrs + '시간 ' : ''}${mins}분\n총 누적: ${Math.floor(total/60) > 0 ? Math.floor(total/60) + '시간 ' : ''}${total%60}분`);
+        }
+      } catch (error) {
+        console.error("Error writing document: ", error);
+        showAlert('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    }
+
+    async function queryTime() {
+      const { grade, cls, num } = stepState;
+      const studentId = getStudentId(grade, cls, num);
+      
+      try {
+        const doc = await db.collection('accumulated').doc(studentId).get();
+        if (!doc.exists) { showAlert('아직 누적된 공부 기록이 없습니다.'); return; }
+
+        const totalMinutes = doc.data().totalMinutes || 0;
+        const dailyRecords = doc.data().dailyRecords || {};
+        const sortedDates = Object.keys(dailyRecords).sort().reverse();
+
+        const detailModal = document.createElement('div');
+        detailModal.className = 'modal-overlay';
+        detailModal.style.position = 'fixed';
+        detailModal.innerHTML = `
+          <div class="modal-box" style="max-width:380px;">
+            <h3 class="font-bold text-xl mb-4 text-center" style="color:#1a3a4a;">📊 누적시간 상세보기</h3>
+            <div style="background:#f0f9ff;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+              <p style="color:#3b82f6;font-size:14px;margin-bottom:4px;">총 누적 공부시간</p>
+              <p style="color:#1a3a4a;font-size:32px;font-weight:bold;">${Math.floor(totalMinutes/60) > 0 ? Math.floor(totalMinutes/60) + '시간 ' : ''}${totalMinutes%60}분</p>
+            </div>
+            ${sortedDates.length > 0 ? `<div style="max-height:200px;overflow-y:auto;margin-bottom:16px;">
+              ${sortedDates.map(date => {
+                const minutes = dailyRecords[date] || 0;
+                const h = Math.floor(minutes/60);
+                const m = minutes % 60;
+                const [,month,day] = date.split('-');
+                return `<div style="background:#f9fafb;border-left:4px solid #2a9d8f;padding:12px;margin-bottom:8px;border-radius:6px;">
+                  <p style="color:#5a7a8a;font-size:14px;margin-bottom:4px;">${parseInt(month)}월 ${parseInt(day)}일</p>
+                  <p style="color:#1a3a4a;font-size:18px;font-weight:bold;">${h > 0 ? h + '시간 ' : ''}${m}분</p>
+                </div>`;
+              }).join('')}
+            </div>` : ''}
+            <button onclick="this.closest('.modal-overlay').remove()" class="w-full py-3 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">닫기</button>
+      </div>
+    `;
+    document.body.appendChild(detailModal);
+  } catch (error) {
+    showAlert('데이터를 불러오는데 실패했습니다.');
+  }
+}
+
+// 순위 및 통계용 전역 변수
+let cachedRankingData = [];
+let currentCountSubTab = 'indiv';
+
+async function openRankingModal() {
+  document.getElementById('rankingModal').classList.remove('hidden');
+  document.getElementById('rankingContent').innerHTML = '<p class="text-center py-4 text-gray-500">데이터를 불러오는 중...</p>';
+  
+  try {
+    // DB에서 데이터 한 번만 불러와서 캐싱해두기 (탭 이동 시 딜레이 방지)
+    const querySnap = await db.collection('accumulated').get();
+    cachedRankingData = [];
+    querySnap.forEach(doc => cachedRankingData.push(doc.data()));
+    
+    // 기본 탭으로 설정
+    switchRankingTab('time');
+  } catch (error) {
+    document.getElementById('rankingContent').innerHTML = '<p class="text-center text-red-500 py-4">데이터를 불러오지 못했습니다.</p>';
+  }
+}
+
+// 탭 전환 로직
+function switchRankingTab(tab) {
+  // 탭 버튼 스타일 변경
+  ['time', 'count', 'perfect'].forEach(t => {
+    const el = document.getElementById(`tab-${t}`);
+    if (t === tab) {
+      el.className = 'flex-1 py-2 font-bold border-b-2 border-[#2a9d8f] text-[#2a9d8f]';
+    } else {
+      el.className = 'flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600';
+    }
+  });
+
+  const content = document.getElementById('rankingContent');
+  content.innerHTML = ''; // 초기화
+
+  if (tab === 'time') {
+    renderTimeRanking(content);
+  } else if (tab === 'count') {
+    content.innerHTML = `
+      <div class="flex justify-center gap-2 mb-3">
+         <button id="subtab-indiv" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white" onclick="switchCountSubTab('indiv')">개인별</button>
+         <button id="subtab-class" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchCountSubTab('class')">학급별</button>
+      </div>
+      <div id="countRankingList" class="space-y-2"></div>
+    `;
+    switchCountSubTab('indiv');
+  } else if (tab === 'perfect') {
+    renderPerfectAttendance(content);
+  }
+}
+
+// 1. 누적시간 렌더링
+function renderTimeRanking(container) {
+  const sorted = [...cachedRankingData].sort((a, b) => (b.totalMinutes || 0) - (a.totalMinutes || 0)).slice(0, 10);
+  
+  sorted.forEach((record, idx) => {
+    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
+    const mins = record.totalMinutes || 0;
+    if (mins === 0) return;
+    const timeStr = `${Math.floor(mins/60) > 0 ? Math.floor(mins/60) + '시간 ' : ''}${mins%60}분`;
+    const item = document.createElement('div');
+    item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
+    item.style.background = idx < 3 ? '#fef3c7' : '#f3f4f6';
+    item.innerHTML = `<span>${medal} ${record.grade}학년 ${record.class}반 ${record.number}번</span><span class="font-bold text-[#d97706]">${timeStr}</span>`;
+    container.appendChild(item);
+  });
+  
+  if (container.innerHTML === '') {
+    container.innerHTML = '<p class="text-center text-gray-500 py-4">아직 기록이 없습니다.</p>';
+  }
+}
+
+// 2. 참여횟수 (개인별/학급별 렌더링)
+function switchCountSubTab(subTab) {
+  currentCountSubTab = subTab;
+  document.getElementById('subtab-indiv').className = subTab === 'indiv' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
+  document.getElementById('subtab-class').className = subTab === 'class' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
+  
+  const listContainer = document.getElementById('countRankingList');
+  listContainer.innerHTML = '';
+
+  if (subTab === 'indiv') {
+     // 출석한 날짜 수가 많은 순 정렬
+     const sorted = [...cachedRankingData].sort((a, b) => {
+       const countA = Object.keys(a.dailyRecords || {}).length;
+       const countB = Object.keys(b.dailyRecords || {}).length;
+       if (countB !== countA) return countB - countA;
+       return (b.totalMinutes||0) - (a.totalMinutes||0); // 동점일 경우 시간순
+     }).slice(0, 10);
+
+     sorted.forEach((record, idx) => {
+       const count = Object.keys(record.dailyRecords || {}).length;
+       if (count === 0) return;
+       const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
+       const item = document.createElement('div');
+       item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
+       item.style.background = idx < 3 ? '#fef3c7' : '#f3f4f6';
+       item.innerHTML = `<span>${medal} ${record.grade}학년 ${record.class}반 ${record.number}번</span><span class="font-bold text-[#2a9d8f]">${count}회 참석</span>`;
+       listContainer.appendChild(item);
+     });
+     
+     if (listContainer.innerHTML === '') listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">기록이 없습니다.</p>';
+  } else {
+     // 학급별 횟수 합산
+     const classCounts = {};
+     cachedRankingData.forEach(record => {
+       const classId = `${record.grade}학년 ${record.class}반`;
+       const count = Object.keys(record.dailyRecords || {}).length;
+       if (count > 0) classCounts[classId] = (classCounts[classId] || 0) + count;
+     });
+
+     const sortedClasses = Object.entries(classCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+     sortedClasses.forEach(([className, count], idx) => {
+       const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
+       const item = document.createElement('div');
+       item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
+       item.style.background = idx < 3 ? '#e0e7ff' : '#f3f4f6';
+       item.innerHTML = `<span>${medal} ${className}</span><span class="font-bold text-[#4f46e5]">총 ${count}회 참석</span>`;
+       listContainer.appendChild(item);
+     });
+
+     if (listContainer.innerHTML === '') listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">기록이 없습니다.</p>';
+  }
+}
+
+// 3. 개근자 렌더링
+function renderPerfectAttendance(container) {
+   // 대상 날짜 문자열 (해당 날짜에 해당하는 기록이 있는지 확인)
+   const targetDates = ['06-29', '06-30', '07-01', '07-02', '07-03'];
+   
+   const perfectStudents = cachedRankingData.filter(student => {
+     const recordDates = Object.keys(student.dailyRecords || {});
+     // 대상 5일이 모두 recordDates에 포함되어 있는지 검사 (년도 상관없이 유연하게 확인)
+     return targetDates.every(td => recordDates.some(rd => rd.endsWith(td)));
+   });
+
+   // 개근자 목록 학년, 반, 번호순으로 보기 좋게 정렬
+   perfectStudents.sort((a,b) => {
+      if(a.grade !== b.grade) return a.grade - b.grade;
+      if(a.class !== b.class) return a.class - b.class;
+      return a.number - b.number;
+   });
+
+   if (perfectStudents.length > 0) {
+     const header = document.createElement('div');
+     header.className = 'mb-3 text-center text-sm text-[#2a9d8f] font-bold bg-[#e6fcf5] py-2 rounded-lg';
+     header.textContent = `🎉 5일 개근 달성자 총 ${perfectStudents.length}명 🎉`;
+     container.appendChild(header);
+
+     const listGrid = document.createElement('div');
+     listGrid.className = 'grid grid-cols-2 gap-2';
+
+     perfectStudents.forEach(record => {
+       const item = document.createElement('div');
+       item.className = 'p-2 rounded-lg shadow-sm text-xs font-bold text-center border border-[#2a9d8f] bg-white text-[#134e4a]';
+       item.textContent = `${record.grade}학년 ${record.class}반 ${record.number}번`;
+       listGrid.appendChild(item);
+     });
+     container.appendChild(listGrid);
+   } else {
+     container.innerHTML = `
+       <div class="text-center py-8">
+         <p class="text-4xl mb-3">🎁</p>
+         <p class="text-gray-500 text-sm font-medium">아직 5일 개근 달성자가 없습니다.<br>완주를 응원합니다!</p>
+       </div>
+     `;
+   }
+}
+
+function showAlert(msg) {
       document.getElementById('alertMsg').textContent = msg;
       document.getElementById('alertModal').classList.remove('hidden');
     }
@@ -166,190 +543,16 @@
       document.getElementById('alertModal').classList.add('hidden');
     }
 
-    function getStudentId(grade, cls, num, name) {
-      return `${grade}-${cls}-${num}-${name}`;
-    }
-
-    document.getElementById('modalConfirm').addEventListener('click', async () => {
-      const grade = document.getElementById('inp-grade').value.trim();
-      const cls = document.getElementById('inp-class').value.trim();
-      const num = document.getElementById('inp-number').value.trim();
-      const name = document.getElementById('inp-name').value.trim();
-      const pw = document.getElementById('inp-password').value.trim();
-
-      if (!grade || !cls || !num || !name || !pw) {
-        showAlert('모든 항목을 입력해주세요.');
-        return;
-      }
-
-      if (currentMode === 'checkin') {
-        const studentId = getStudentId(grade, cls, num, name);
-        
-        // Check if already checked in
-        const checkinDoc = await db.collection('checkins').doc(studentId).get();
-        if (checkinDoc.exists) {
-          closeModal();
-          showAlert('이미 입실중입니다.');
-          return;
-        }
-
-        // Check if grade-class-number already exists with different name
-        const querySnap = await db.collection('accumulated').where('grade', '==', grade).where('class', '==', cls).where('number', '==', num).get();
-        if (!querySnap.empty) {
-          const existingRecord = querySnap.docs[0].data();
-          if (existingRecord.name !== name) {
-            showAlert('정보를 확인하세요.');
-            return;
-          }
-        }
-
-        await db.collection('checkins').doc(studentId).set({
-          grade, class: cls, number: num, name, password: pw,
-          checkinTime: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        closeModal();
-        showAlert('입실 완료! 열공하세요 💪');
-      } else {
-        // Checkout
-        const studentId = getStudentId(grade, cls, num, name);
-        const doc = await db.collection('checkins').doc(studentId).get();
-        if (!doc.exists) {
-          closeModal();
-          showAlert('입실 정보가 없습니다.');
-          return;
-        }
-        const data = doc.data();
-        if (data.password !== pw) {
-          showAlert('비밀번호를 확인하세요.');
-          return;
-        }
-        const checkinTime = data.checkinTime.toDate();
-        const now = new Date();
-        const diffMs = now - checkinTime;
-        const diffMin = Math.floor(diffMs / 60000);
-
-        // Accumulate time
-        const timeRef = db.collection('accumulated').doc(studentId);
-        const timeDoc = await timeRef.get();
-        let total = diffMin;
-        let dailyRecords = {};
-        if (timeDoc.exists) {
-          total += timeDoc.data().totalMinutes || 0;
-          dailyRecords = timeDoc.data().dailyRecords || {};
-        }
-        // Add today's study time in YYYY-MM-DD format
-        const today = now.toISOString().split('T')[0];
-        dailyRecords[today] = (dailyRecords[today] || 0) + diffMin;
-        await timeRef.set({ grade, class: cls, number: num, name, totalMinutes: total, dailyRecords });
-
-        // Remove checkin record
-        await db.collection('checkins').doc(studentId).delete();
-
-        closeModal();
-        const hrs = Math.floor(diffMin / 60);
-        const mins = diffMin % 60;
-        showAlert(`퇴실 완료! 오늘 공부시간: ${hrs > 0 ? hrs + '시간 ' : ''}${mins}분\n누적: ${Math.floor(total/60) > 0 ? Math.floor(total/60) + '시간 ' : ''}${total%60}분`);
-      }
-    });
-
-    function openTimeModal() {
-      document.getElementById('timeModal').classList.remove('hidden');
-      document.getElementById('timeResult').classList.add('hidden');
-      ['time-grade','time-class','time-number','time-name'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
-    }
-
-    async function queryTime() {
-      const grade = document.getElementById('time-grade').value.trim();
-      const cls = document.getElementById('time-class').value.trim();
-      const num = document.getElementById('time-number').value.trim();
-      const name = document.getElementById('time-name').value.trim();
-      if (!grade || !cls || !num || !name) { showAlert('모든 항목을 입력해주세요.'); return; }
-      const studentId = getStudentId(grade, cls, num, name);
-      const doc = await db.collection('accumulated').doc(studentId).get();
-      if (!doc.exists) {
-        showAlert('기록이 없습니다.');
-        return;
-      }
-      
-      const totalMinutes = doc.data().totalMinutes || 0;
-      const dailyRecords = doc.data().dailyRecords || {};
-      
-      // Sort dates
-      const sortedDates = Object.keys(dailyRecords).sort().reverse();
-      
-      // Create detailed result modal
-      const detailModal = document.createElement('div');
-      detailModal.className = 'modal-overlay';
-      detailModal.style.position = 'fixed';
-      detailModal.innerHTML = `
-        <div class="modal-box" style="max-width:380px;">
-          <h3 class="font-bold text-xl mb-4 text-center" style="color:#1a3a4a;">📊 누적시간 상세보기</h3>
-          <div style="max-height:300px;overflow-y:auto;margin-bottom:16px;">
-            ${sortedDates.map(date => {
-              const minutes = dailyRecords[date] || 0;
-              const hours = Math.floor(minutes / 60);
-              const mins = minutes % 60;
-              const timeStr = hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
-              const [year, month, day] = date.split('-');
-              const formattedDate = `${parseInt(month)}/${parseInt(day)}`;
-              return `
-                <div style="background:#f9fafb;border-left:4px solid #2a9d8f;padding:12px;margin-bottom:8px;border-radius:6px;">
-                  <p style="color:#5a7a8a;font-size:14px;margin-bottom:4px;">${formattedDate}</p>
-                  <p style="color:#1a3a4a;font-size:18px;font-weight:bold;">${timeStr}</p>
-                </div>
-              `;
-            }).join('')}
-          </div>
-          <div style="background:#f0f9ff;border-radius:12px;padding:16px;margin-bottom:16px;text-center;border-top:2px solid #e0f2fe;">
-            <p style="color:#3b82f6;font-size:14px;margin-bottom:4px;">총 누적 공부시간</p>
-            <p style="color:#1a3a4a;font-size:32px;font-weight:bold;">${Math.floor(totalMinutes/60) > 0 ? Math.floor(totalMinutes/60) + '시간 ' : ''}${totalMinutes%60}분</p>
-          </div>
-          <button onclick="this.closest('.modal-overlay').remove()" class="w-full py-3 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">닫기</button>
-        </div>
-      `;
-      document.body.appendChild(detailModal);
-    }
-
-    async function openRankingModal() {
-      document.getElementById('rankingModal').classList.remove('hidden');
-      const querySnap = await db.collection('accumulated').get();
-      const records = [];
-      querySnap.forEach(doc => {
-        records.push(doc.data());
-      });
-      records.sort((a, b) => (b.totalMinutes || 0) - (a.totalMinutes || 0));
-      const top10 = records.slice(0, 10);
-      const rankingList = document.getElementById('rankingList');
-      rankingList.innerHTML = '';
-      top10.forEach((record, idx) => {
-        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}위`;
-        const mins = record.totalMinutes || 0;
-        const timeStr = `${Math.floor(mins/60) > 0 ? Math.floor(mins/60) + '시간 ' : ''}${mins%60}분`;
-        const item = document.createElement('div');
-        item.className = 'p-3 rounded-lg shadow-sm text-sm';
-        item.style.background = '#f3f4f6';
-        item.textContent = `${medal} ${record.grade}학년 ${record.class}반 ${record.name} - ${timeStr}`;
-        rankingList.appendChild(item);
-      });
-      if (top10.length === 0) {
-        rankingList.innerHTML = '<p class="text-center text-gray-500 py-4">아직 기록이 없습니다.</p>';
-      }
-    }
-
     function toggleFullscreen() {
       const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-      } else if (elem.mozRequestFullScreen) {
-        elem.mozRequestFullScreen();
-      } else if (elem.msRequestFullscreen) {
-        elem.msRequestFullscreen();
+      if (!document.fullscreenElement) {
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
       }
     }
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a113567360b3a76e',t:'MTc4MjM4Mzg1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ </body>
 </html>
