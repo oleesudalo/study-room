@@ -28,14 +28,17 @@
    <div class="dot-decoration bg-teal-200" style="top:300px;left:-40px;width:90px;height:90px;"></div>
    <div class="dot-decoration bg-yellow-200" style="bottom:200px;right:-20px;width:60px;height:60px;"></div>
    <div class="relative z-10 px-3 py-4 flex flex-col items-center h-full">
-    <div class="absolute top-3 right-3 z-20"><button data-template-id="button-fullscreen" class="canva-button rounded-lg p-2 text-xs font-bold shadow-sm" style="background:#6366f1;color:#fff;" onclick="toggleFullscreen()" title="전체화면"> <i data-lucide="maximize-2" style="width: 18px; height: 18px;"></i> </button>
+    <div class="absolute top-3 right-3 z-20">
+     <button data-template-id="button-fullscreen" class="canva-button rounded-lg p-2 text-xs font-bold shadow-sm" style="background:#6366f1;color:#fff;" onclick="toggleFullscreen()" title="전체화면"> <i data-lucide="maximize-2" style="width: 18px; height: 18px;"></i> </button>
     </div>
-    <header class="mb-2"><span data-template-id="badge" class="canva-tag inline-block px-4 py-1 rounded-full text-sm font-medium border-2" style="color:#2a9d8f;border-color:#2a9d8f;">STUDY PROJECT</span>
+    <header class="mb-2">
+     <span data-template-id="badge" class="canva-tag inline-block px-4 py-1 rounded-full text-sm font-medium border-2" style="color:#2a9d8f;border-color:#2a9d8f;">STUDY PROJECT</span>
     </header>
     <h1 data-template-id="main-title" class="canva-text text-center font-black leading-tight mb-1" style="color:#1a3a4a;font-size:28px;">동명 열공 프로젝트</h1>
     <p data-template-id="subtitle" class="canva-text text-center text-xs mb-3" style="color:#5a7a8a;font-size:13px;">같이 공부하면 더 재밌어! 5일 완주 도전</p>
     <section class="w-full mb-3">
-     <div class="flex items-center justify-center gap-2 mb-2"><span class="text-lg">📅</span>
+     <div class="flex items-center justify-center gap-2 mb-2">
+      <span class="text-lg">📅</span>
       <h2 data-template-id="schedule-label" class="canva-text font-bold text-center" style="color:#1a3a4a;font-size:20px;">일정</h2>
      </div>
      <div data-template-id="schedule-card" class="canva-card rounded-xl p-3 text-center shadow-sm bg-white">
@@ -45,7 +48,8 @@
      </div>
     </section>
     <section class="w-full mb-3">
-     <div class="flex items-center justify-center gap-2 mb-2"><span class="text-lg">📍</span>
+     <div class="flex items-center justify-center gap-2 mb-2">
+      <span class="text-lg">📍</span>
       <h2 data-template-id="location-label" class="canva-text font-bold text-center" style="color:#1a3a4a;font-size:20px;">장소</h2>
      </div>
      <div class="grid grid-cols-2 gap-2">
@@ -60,7 +64,8 @@
      </div>
     </section>
     <section class="w-full mb-3">
-     <div class="flex items-center justify-center gap-2 mb-2"><span class="text-lg">⬇️</span>
+     <div class="flex items-center justify-center gap-2 mb-2">
+      <span class="text-lg">⬇️</span>
       <h2 data-template-id="rules-label" class="canva-text font-bold text-center" style="color:#1a3a4a;font-size:20px;">참가 규칙</h2>
      </div>
      <div class="space-y-1">
@@ -85,16 +90,14 @@
       <p data-template-id="reward-subtext" class="canva-text text-xs" style="color:#5a7a8a;font-size:12px;">하루도 빠짐없이 참석한 분께 드리는 특별 선물!</p>
      </div>
     </section>
-    <section class="w-full grid grid-cols-4 gap-2 mt-auto pb-2">
-     <button data-template-id="button-checkin" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#2a9d8f;color:#fff;" onclick="openModal('checkin')">입실</button> <button data-template-id="button-checkout" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#d97706;color:#fff;" onclick="openModal('checkout')">퇴실</button> <button data-template-id="button-time" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#3b82f6;color:#fff;" onclick="openTimeModal()">누적시간</button> <button data-template-id="button-ranking" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#ec4899;color:#fff;" onclick="openRankingModal()">순위</button>
+    <section class="w-full grid grid-cols-4 gap-2 mt-auto"><button data-template-id="button-checkin" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#2a9d8f;color:#fff;" onclick="openModal('checkin')">입실</button> <button data-template-id="button-checkout" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#d97706;color:#fff;" onclick="openModal('checkout')">퇴실</button> <button data-template-id="button-time" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#3b82f6;color:#fff;" onclick="openTimeModal()">누적시간</button> <button data-template-id="button-ranking" class="canva-button rounded-lg py-2 px-2 text-xs font-bold shadow-sm" style="background:#ec4899;color:#fff;" onclick="openRankingModal()">순위</button>
     </section>
    </div>
   </div><!-- Check-in/out Modal -->
   <div id="formModal" class="modal-overlay hidden">
    <div class="modal-box">
     <h3 id="modalTitle" class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;"></h3><input id="inp-grade" type="number" placeholder="학년" min="1" max="3"> <input id="inp-class" type="number" placeholder="반" min="1" max="20"> <input id="inp-number" type="number" placeholder="번호" min="1" max="40"> <input id="inp-name" type="text" placeholder="이름"> <input id="inp-password" type="password" placeholder="비밀번호">
-    <div class="flex gap-2 mt-2">
-     <button onclick="closeModal()" class="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-600">취소</button> <button id="modalConfirm" class="flex-1 py-2 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">확인</button>
+    <div class="flex gap-2 mt-2"><button onclick="closeModal()" class="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-600">취소</button> <button id="modalConfirm" class="flex-1 py-2 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">확인</button>
     </div>
    </div>
   </div><!-- Alert Modal -->
@@ -107,8 +110,7 @@
    <div class="modal-box">
     <h3 class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;">누적시간 조회</h3><input id="time-grade" type="number" placeholder="학년" min="1" max="3"> <input id="time-class" type="number" placeholder="반" min="1" max="20"> <input id="time-number" type="number" placeholder="번호" min="1" max="40"> <input id="time-name" type="text" placeholder="이름">
     <div id="timeResult" class="text-center text-sm font-medium py-2 hidden" style="color:#2a9d8f;"></div>
-    <div class="flex gap-2 mt-2">
-     <button onclick="document.getElementById('timeModal').classList.add('hidden')" class="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-600">닫기</button> <button onclick="queryTime()" class="flex-1 py-2 rounded-lg text-sm font-bold text-white" style="background:#3b82f6;">조회</button>
+    <div class="flex gap-2 mt-2"><button onclick="document.getElementById('timeModal').classList.add('hidden')" class="flex-1 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-600">닫기</button> <button onclick="queryTime()" class="flex-1 py-2 rounded-lg text-sm font-bold text-white" style="background:#3b82f6;">조회</button>
     </div>
    </div>
   </div><!-- Ranking Modal -->
@@ -117,8 +119,7 @@
     <h3 class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;">🏆 순위</h3>
     <div id="rankingList" class="space-y-2">
     </div>
-    <div class="flex gap-2 mt-4">
-     <button onclick="document.getElementById('rankingModal').classList.add('hidden')" class="w-full py-2 rounded-lg text-sm font-medium text-white" style="background:#2a9d8f;">닫기</button>
+    <div class="flex gap-2 mt-4"><button onclick="document.getElementById('rankingModal').classList.add('hidden')" class="w-full py-2 rounded-lg text-sm font-medium text-white" style="background:#2a9d8f;">닫기</button>
     </div>
    </div>
   </div>
@@ -293,5 +294,5 @@
       }
     }
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a112f44cc522ea1c',t:'MTc4MjM3OTgzNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a11303ddb6c9ea17',t:'MTc4MjM4MDQ3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
