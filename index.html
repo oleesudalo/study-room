@@ -70,61 +70,60 @@ export default function App() {
   const formatTime = (ms) => `${Math.floor(ms / 3600000)}시간 ${Math.floor((ms % 3600000) / 60000)}분`;
 
   return (
-    <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-xl flex flex-col gap-6">
+    <div className="bg-gray-100 min-h-screen flex items-center justify-center p-2 font-sans">
+      <div className="bg-white w-full max-w-sm rounded-2xl p-4 shadow-lg flex flex-col gap-4">
         {statusMessage && (
-          <div className="bg-blue-600 text-white p-4 rounded-xl text-center font-bold animate-bounce fixed top-4 left-4 right-4 z-[100]">
+          <div className="bg-blue-600 text-white p-3 rounded-lg text-center font-bold text-sm fixed top-2 left-2 right-2 z-[100] shadow-xl">
             {statusMessage}
           </div>
         )}
         
-        {/* 상단 구성 복구 */}
-        <div className="flex justify-center"><div className="bg-blue-100 text-blue-600 font-bold px-4 py-1 rounded-full text-sm tracking-widest">✏️ STUDY PROJECT ✏️</div></div>
-        <h1 className="text-3xl font-black text-center text-blue-900">동명 열공 프로젝트</h1>
-        <p className="text-center text-gray-500 text-sm">같이 공부하면 더 재밌어! 5일 완주 도전 🌟</p>
+        <div className="flex justify-center"><div className="bg-blue-50 text-blue-600 font-bold px-3 py-0.5 rounded-full text-[10px] tracking-widest">✏️ STUDY PROJECT ✏️</div></div>
+        <h1 className="text-xl font-black text-center text-blue-900">동명 열공 프로젝트</h1>
+        <p className="text-center text-gray-500 text-[10px]">같이 공부하면 더 재밌어! 5일 완주 도전 🌟</p>
         
-        <div className="bg-blue-800 text-white p-5 rounded-2xl text-center">
-            <div className="text-xs opacity-80 mb-1">🗓 일정</div>
-            <div className="font-bold text-base">6월 29일(월) ~ 7월 3일(금)</div>
-            <div className="text-[10px] opacity-75 mt-1">5일간 진행 / 매일 12:35 ~ 1:25 (50분)</div>
+        <div className="bg-blue-800 text-white p-3 rounded-xl text-center">
+            <div className="text-[9px] opacity-80 mb-0.5">🗓 일정</div>
+            <div className="font-bold text-xs">6월 29일(월) ~ 7월 3일(금)</div>
+            <div className="text-[8px] opacity-75 mt-0.5">5일간 진행 / 매일 12:35 ~ 1:25 (50분)</div>
         </div>
 
-        <div className="flex gap-2">
-            <div className="flex-1 bg-green-50 p-3 rounded-xl border text-center text-green-800 font-bold text-xs">학생 자치회실</div>
-            <div className="flex-1 bg-blue-50 p-3 rounded-xl border text-center text-blue-800 font-bold text-xs">학교 도서실</div>
+        <div className="flex gap-1">
+            <div className="flex-1 bg-green-50 p-2 rounded-lg border text-center text-green-800 font-bold text-[10px]">학생 자치회실</div>
+            <div className="flex-1 bg-blue-50 p-2 rounded-lg border text-center text-blue-800 font-bold text-[10px]">학교 도서실</div>
         </div>
 
-        <div className="space-y-2">
-            <div className="text-sm font-bold text-gray-600">⚠️ 참가 규칙</div>
-            <div className="bg-green-50 p-3 rounded-lg border-l-4 border-green-500 text-xs">🚫 친구 자리 맞추기 금지</div>
-            <div className="bg-gray-50 p-3 rounded-lg border-l-4 border-gray-500 text-xs">🪑 자리 이탈 금지</div>
-            <div className="bg-red-50 p-3 rounded-lg border-l-4 border-red-500 text-xs">🔴 경고 2회 시 강퇴</div>
+        <div className="space-y-1">
+            <div className="text-[10px] font-bold text-gray-600">⚠️ 참가 규칙</div>
+            <div className="bg-green-50 p-1.5 rounded border-l-2 border-green-500 text-[9px]">🚫 친구 자리 맞추기 금지</div>
+            <div className="bg-gray-50 p-1.5 rounded border-l-2 border-gray-500 text-[9px]">🪑 자리 이탈 금지</div>
+            <div className="bg-red-50 p-1.5 rounded border-l-2 border-red-500 text-[9px]">🔴 경고 2회 시 강퇴</div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mt-auto">
-          <button onClick={() => setActiveModal('in')} className="bg-blue-600 text-white font-bold py-4 rounded-xl text-sm">입실</button>
-          <button onClick={() => setActiveModal('out')} className="bg-red-500 text-white font-bold py-4 rounded-xl text-sm">퇴실</button>
-          <button onClick={() => setActiveModal('time')} className="bg-emerald-600 text-white font-bold py-4 rounded-xl text-sm">누적 시간</button>
+        <div className="grid grid-cols-3 gap-1 mt-auto">
+          <button onClick={() => setActiveModal('in')} className="bg-blue-600 text-white font-bold py-2 rounded-lg text-[10px]">입실</button>
+          <button onClick={() => setActiveModal('out')} className="bg-red-500 text-white font-bold py-2 rounded-lg text-[10px]">퇴실</button>
+          <button onClick={() => setActiveModal('time')} className="bg-emerald-600 text-white font-bold py-2 rounded-lg text-[10px]">누적 시간</button>
         </div>
 
         {activeModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white p-6 rounded-2xl w-full max-w-sm space-y-4">
-              <h2 className="font-bold text-lg">정보 입력</h2>
-              <div className="flex gap-2">
-                <select onChange={e=>setGrade(e.target.value)} className="border p-2 rounded w-full text-sm"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
-                <input type="number" onChange={e=>setClassNum(e.target.value)} placeholder="반" className="border p-2 rounded w-16 text-sm"/>
-                <input type="number" onChange={e=>setStudentNum(e.target.value)} placeholder="번호" className="border p-2 rounded w-16 text-sm"/>
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-3 z-50">
+            <div className="bg-white p-4 rounded-xl w-full max-w-[280px] space-y-3 shadow-2xl">
+              <h2 className="font-bold text-sm">정보 입력</h2>
+              <div className="flex gap-1">
+                <select onChange={e=>setGrade(e.target.value)} className="border p-1 rounded w-full text-[10px]"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select>
+                <input type="number" onChange={e=>setClassNum(e.target.value)} placeholder="반" className="border p-1 rounded w-12 text-[10px]"/>
+                <input type="number" onChange={e=>setStudentNum(e.target.value)} placeholder="번호" className="border p-1 rounded w-12 text-[10px]"/>
               </div>
-              {(activeModal === 'in' || activeModal === 'out') && <input type="text" onChange={e=>setName(e.target.value)} placeholder="이름" className="w-full border p-2 rounded text-sm"/>}
-              <input type="password" onChange={e=>setPassword(e.target.value)} placeholder="비밀번호(4자리)" className="w-full border p-2 rounded text-sm"/>
+              {(activeModal === 'in' || activeModal === 'out') && <input type="text" onChange={e=>setName(e.target.value)} placeholder="이름" className="w-full border p-1 rounded text-[10px]"/>}
+              <input type="password" onChange={e=>setPassword(e.target.value)} placeholder="비밀번호(4자리)" className="w-full border p-1 rounded text-[10px]"/>
               
-              {activeModal === 'in' && <button onClick={handleCheckIn} className="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm">입실 확인</button>}
-              {activeModal === 'out' && <button onClick={handleCheckOut} className="w-full bg-red-600 text-white py-2 rounded font-bold text-sm">퇴실 확인</button>}
-              {activeModal === 'time' && <button onClick={handleViewRecord} className="w-full bg-emerald-600 text-white py-2 rounded font-bold text-sm">조회</button>}
+              {activeModal === 'in' && <button onClick={handleCheckIn} className="w-full bg-blue-600 text-white py-1.5 rounded text-[10px] font-bold">입실 확인</button>}
+              {activeModal === 'out' && <button onClick={handleCheckOut} className="w-full bg-red-600 text-white py-1.5 rounded text-[10px] font-bold">퇴실 확인</button>}
+              {activeModal === 'time' && <button onClick={handleViewRecord} className="w-full bg-emerald-600 text-white py-1.5 rounded text-[10px] font-bold">조회</button>}
               
-              {recordResult && <div className="text-center font-bold text-md p-3 bg-gray-100 rounded text-sm">{formatTime(recordResult.total)}</div>}
-              <button onClick={() => {setActiveModal(null); setRecordResult(null);}} className="w-full bg-gray-200 py-2 rounded text-sm">닫기</button>
+              {recordResult && <div className="text-center font-bold text-[10px] p-2 bg-gray-100 rounded">{formatTime(recordResult.total)}</div>}
+              <button onClick={() => {setActiveModal(null); setRecordResult(null);}} className="w-full bg-gray-200 py-1.5 rounded text-[10px]">닫기</button>
             </div>
           </div>
         )}
