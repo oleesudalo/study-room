@@ -216,13 +216,10 @@
           '</div>';
       } else if (stepState.step === 3) {
         title.textContent = `${stepState.grade}학년 ${stepState.cls}반 ${stepState.num}번`;
-        subtitle.textContent = '비밀번호 4자리를 입력하세요';
-        // 수정: maxlength="4" 속성 추가 및 숫자만 입력하기 좋게 pattern 추가
+        subtitle.textContent = '해당 정보로 진행하시겠습니까?';
         content.innerHTML = `
-          <input id="step-password" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="비밀번호 4자리" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:12px;font-size:18px;margin-bottom:8px;text-align:center;letter-spacing:0.5em;" onfocus="this.style.borderColor='#2a9d8f'" onblur="this.style.borderColor='#e2e8f0'">
           <button onclick="submitAction()" class="w-full py-3 rounded-lg text-sm font-bold text-white mt-2" style="background:${currentMode === 'checkin' ? '#2a9d8f' : '#d97706'};">${modeLabel} 완료</button>
         `;
-        setTimeout(() => document.getElementById('step-password').focus(), 100);
       }
     }
 
@@ -254,14 +251,6 @@
     }
 
     async function submitAction() {
-      const pw = document.getElementById('step-password').value.trim();
-      
-      // 수정: 비밀번호 4자리 검증
-      if (pw.length !== 4) { 
-        showAlert('비밀번호 4자리를 정확히 입력해주세요.'); 
-        return; 
-      }
-
       const { grade, cls, num } = stepState;
       const studentId = getStudentId(grade, cls, num);
 
@@ -276,7 +265,7 @@
           }
 
           await db.collection('checkins').doc(studentId).set({
-            grade: String(grade), class: String(cls), number: String(num), password: pw,
+            grade: String(grade), class: String(cls), number: String(num),
             checkinTime: firebase.firestore.FieldValue.serverTimestamp()
           });
           
@@ -288,7 +277,6 @@
           if (!doc.exists) { closeStepModal(); showAlert('입실 정보가 없습니다. 먼저 입실해주세요.'); return; }
           
           const data = doc.data();
-          if (data.password !== pw) { showAlert('비밀번호가 일치하지 않습니다.'); return; }
 
           const checkinTime = data.checkinTime.toDate();
           const now = new Date();
@@ -401,7 +389,14 @@ function switchRankingTab(tab) {
   content.innerHTML = ''; // 초기화
 
   if (tab === 'time') {
-    renderTimeRanking(content);
+    content.innerHTML = `
+      <div class="flex justify-center gap-2 mb-3">
+         <button id="time-subtab-indiv" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white" onclick="switchTimeSubTab('indiv')">개인별</button>
+         <button id="time-subtab-class" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchTimeSubTab('class')">학급별</button>
+      </div>
+      <div id="timeRankingList" class="space-y-2"></div>
+    `;
+    switchTimeSubTab('indiv');
   } else if (tab === 'count') {
     content.innerHTML = `
       <div class="flex justify-center gap-2 mb-3">
@@ -416,24 +411,55 @@ function switchRankingTab(tab) {
   }
 }
 
-// 1. 누적시간 렌더링
-function renderTimeRanking(container) {
-  const sorted = [...cachedRankingData].sort((a, b) => (b.totalMinutes || 0) - (a.totalMinutes || 0)).slice(0, 10);
+// 1. 누적시간 렌더링 (개인별/학급별)
+function switchTimeSubTab(subTab) {
+  document.getElementById('time-subtab-indiv').className = subTab === 'indiv' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
+  document.getElementById('time-subtab-class').className = subTab === 'class' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
   
-  sorted.forEach((record, idx) => {
-    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
-    const mins = record.totalMinutes || 0;
-    if (mins === 0) return;
-    const timeStr = `${Math.floor(mins/60) > 0 ? Math.floor(mins/60) + '시간 ' : ''}${mins%60}분`;
-    const item = document.createElement('div');
-    item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
-    item.style.background = idx < 3 ? '#fef3c7' : '#f3f4f6';
-    item.innerHTML = `<span>${medal} ${record.grade}학년 ${record.class}반 ${record.number}번</span><span class="font-bold text-[#d97706]">${timeStr}</span>`;
-    container.appendChild(item);
-  });
-  
-  if (container.innerHTML === '') {
-    container.innerHTML = '<p class="text-center text-gray-500 py-4">아직 기록이 없습니다.</p>';
+  const listContainer = document.getElementById('timeRankingList');
+  listContainer.innerHTML = '';
+
+  if (subTab === 'indiv') {
+    const sorted = [...cachedRankingData].sort((a, b) => (b.totalMinutes || 0) - (a.totalMinutes || 0)).slice(0, 10);
+    
+    sorted.forEach((record, idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
+      const mins = record.totalMinutes || 0;
+      if (mins === 0) return;
+      const timeStr = `${Math.floor(mins/60) > 0 ? Math.floor(mins/60) + '시간 ' : ''}${mins%60}분`;
+      const item = document.createElement('div');
+      item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
+      item.style.background = idx < 3 ? '#fef3c7' : '#f3f4f6';
+      item.innerHTML = `<span>${medal} ${record.grade}학년 ${record.class}반 ${record.number}번</span><span class="font-bold text-[#d97706]">${timeStr}</span>`;
+      listContainer.appendChild(item);
+    });
+    
+    if (listContainer.innerHTML === '') {
+      listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">아직 기록이 없습니다.</p>';
+    }
+  } else {
+    // 학급별 시간 합산
+    const classTimes = {};
+    cachedRankingData.forEach(record => {
+      const classId = `${record.grade}학년 ${record.class}반`;
+      const mins = record.totalMinutes || 0;
+      if (mins > 0) classTimes[classId] = (classTimes[classId] || 0) + mins;
+    });
+
+    const sortedClasses = Object.entries(classTimes).sort((a,b) => b[1] - a[1]).slice(0, 10);
+    sortedClasses.forEach(([className, totalMins], idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
+      const timeStr = `${Math.floor(totalMins/60) > 0 ? Math.floor(totalMins/60) + '시간 ' : ''}${totalMins%60}분`;
+      const item = document.createElement('div');
+      item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
+      item.style.background = idx < 3 ? '#e0e7ff' : '#f3f4f6';
+      item.innerHTML = `<span>${medal} ${className}</span><span class="font-bold text-[#4f46e5]">${timeStr}</span>`;
+      listContainer.appendChild(item);
+    });
+
+    if (listContainer.innerHTML === '') {
+      listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">기록이 없습니다.</p>';
+    }
   }
 }
 
