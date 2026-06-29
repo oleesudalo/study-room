@@ -191,7 +191,7 @@
           
           const checkinTime = data.checkinTime.toDate();
           const deadline = new Date(checkinTime);
-          deadline.setHours(13, 50, 0, 0); // 당일 오후 1시 30분 마감
+          deadline.setHours(13, 30, 0, 0); // 당일 오후 1시 30분 마감
           
           if (now > deadline) {
             const studentId = doc.id;
