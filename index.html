@@ -126,8 +126,9 @@
     <h3 class="font-bold text-lg mb-3 text-center" style="color:#1a3a4a;">⏱️ 누적시간 조회</h3>
     <!-- 탭 메뉴 -->
     <div class="flex border-b mb-3 text-sm">
-      <button id="timeView-tab-indiv" class="flex-1 py-2 font-bold border-b-2 border-[#3b82f6] text-[#3b82f6]" onclick="switchTimeViewTab('indiv')">개인별 전체 (최신순)</button>
-      <button id="timeView-tab-class" class="flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400" onclick="switchTimeViewTab('class')">반별 검색</button>
+      <button id="timeView-tab-indiv" class="flex-1 py-2 font-bold border-b-2 border-[#3b82f6] text-[#3b82f6]" onclick="switchTimeViewTab('indiv')">개인별</button>
+      <button id="timeView-tab-class" class="flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400" onclick="switchTimeViewTab('class')">반별</button>
+      <button id="timeView-tab-chart" class="flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400" onclick="switchTimeViewTab('chart')">현황</button>
     </div>
     <!-- 탭 컨텐츠 -->
     <div id="timeViewContent" class="overflow-y-auto flex-1 mb-2 space-y-2 p-1 min-h-[200px]">
@@ -401,8 +402,12 @@
     }
 
     function switchTimeViewTab(tab) {
-      document.getElementById('timeView-tab-indiv').className = tab === 'indiv' ? 'flex-1 py-2 font-bold border-b-2 border-[#3b82f6] text-[#3b82f6]' : 'flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600';
-      document.getElementById('timeView-tab-class').className = tab === 'class' ? 'flex-1 py-2 font-bold border-b-2 border-[#3b82f6] text-[#3b82f6]' : 'flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600';
+      ['indiv', 'class', 'chart'].forEach(t => {
+        const el = document.getElementById(`timeView-tab-${t}`);
+        if(el) {
+          el.className = t === tab ? 'flex-1 py-2 font-bold border-b-2 border-[#3b82f6] text-[#3b82f6]' : 'flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600';
+        }
+      });
 
       const content = document.getElementById('timeViewContent');
       content.innerHTML = '';
@@ -421,7 +426,7 @@
         });
         
         if (sorted.length === 0) content.innerHTML = '<p class="text-center text-gray-500 py-4">아직 기록이 없습니다.</p>';
-      } else {
+      } else if (tab === 'class') {
         // 반별 검색 드롭다운
         content.innerHTML = `
           <div class="flex gap-2 mb-3">
@@ -440,7 +445,84 @@
             <p class="text-center text-gray-500 py-4 text-sm">학년과 반을 선택해주세요.</p>
           </div>
         `;
+      } else if (tab === 'chart') {
+        // 현황 그래프 (막대 차트)
+        content.innerHTML = `
+          <div class="flex justify-center gap-2 mb-4">
+             <button id="chart-subtab-all" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#3b82f6] text-white" onclick="switchChartSubTab('all')">전체</button>
+             <button id="chart-subtab-g2" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchChartSubTab('g2')">2학년</button>
+             <button id="chart-subtab-g3" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchChartSubTab('g3')">3학년</button>
+          </div>
+          <div id="chartContainer" class="p-2 space-y-4"></div>
+        `;
+        switchChartSubTab('all');
       }
+    }
+
+    function switchChartSubTab(scope) {
+      ['all', 'g2', 'g3'].forEach(s => {
+         const btn = document.getElementById(`chart-subtab-${s}`);
+         if(btn) {
+            btn.className = s === scope ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#3b82f6] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
+         }
+      });
+
+      const container = document.getElementById('chartContainer');
+      let dataPoints = [];
+
+      if (scope === 'all') {
+         let sum2 = 0, sum3 = 0;
+         cachedTimeViewData.forEach(d => {
+            if(d.grade === '2') sum2 += (d.totalMinutes || 0);
+            if(d.grade === '3') sum3 += (d.totalMinutes || 0);
+         });
+         dataPoints = [
+            { label: '2학년 전체 누적', val: sum2 },
+            { label: '3학년 전체 누적', val: sum3 }
+         ];
+      } else {
+         const targetGrade = scope === 'g2' ? '2' : '3';
+         const classSums = {};
+         cachedTimeViewData.forEach(d => {
+            if(d.grade === targetGrade) {
+               classSums[d.class] = (classSums[d.class] || 0) + (d.totalMinutes || 0);
+            }
+         });
+         // 1반부터 7반까지 모두 표시
+         for(let i = 1; i <= 7; i++) {
+            dataPoints.push({ label: `${i}반`, val: classSums[String(i)] || 0 });
+         }
+      }
+
+      // 차트 비율 계산용 최댓값 구하기
+      const maxVal = Math.max(...dataPoints.map(d => d.val), 1);
+
+      container.innerHTML = dataPoints.map((d) => {
+         const width = (d.val / maxVal) * 100;
+         const hrs = Math.floor(d.val / 60);
+         const mins = d.val % 60;
+         const timeStr = hrs > 0 ? `${hrs}시간 ${mins}분` : `${mins}분`;
+         
+         return `
+           <div>
+              <div class="flex justify-between text-xs font-bold text-gray-700 mb-1 px-1">
+                <span>${d.label}</span>
+                <span class="text-[#3b82f6]">${timeStr}</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-4 border border-gray-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-full rounded-full transition-all duration-700 ease-out" style="width: ${width}%"></div>
+              </div>
+           </div>
+         `;
+      }).join('');
+      
+      // 처음 열렸을 때 애니메이션을 위해 아주 잠깐 지연 후 width 적용 (트릭)
+      const bars = container.querySelectorAll('.bg-gradient-to-r');
+      bars.forEach(bar => {
+        const targetWidth = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = targetWidth; }, 50);
+      });
     }
 
     function renderFilteredClassTime() {
