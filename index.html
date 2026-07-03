@@ -115,7 +115,6 @@
     <h3 id="stepTitle" class="font-bold text-lg mb-1 text-center" style="color:#1a3a4a;"></h3>
     <p id="stepSubtitle" class="text-sm text-center mb-4" style="color:#5a7a8a;"></p>
     <div id="stepContent"></div>
-    <!-- id를 stepCancel에서 stepBack으로 수정하여 JS 에러 방지 -->
     <button id="stepBack" class="w-full py-3 rounded-lg text-sm font-medium mt-4" style="background:#e5e7eb;color:#374151;">취소</button>
    </div>
   </div>
@@ -140,7 +139,7 @@
   </div>
 
   <!-- Alert Modal -->
-  <div id="alertModal" class="modal-overlay hidden">
+  <div id="alertModal" class="modal-overlay hidden z-[100]">
    <div class="alert-box">
     <p id="alertMsg" class="font-medium text-sm mb-3" style="color:#1a3a4a;white-space:pre-line;"></p>
     <button onclick="closeAlert()" class="px-6 py-2 rounded-lg text-sm font-bold text-white" style="background:#2a9d8f;">확인</button>
@@ -158,7 +157,7 @@
       <button id="tab-perfect" class="flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400" onclick="switchRankingTab('perfect')">개근자</button>
     </div>
     <!-- 탭 컨텐츠 (스크롤 영역) -->
-    <div id="rankingContent" class="overflow-y-auto flex-1 mb-2 space-y-2 p-1">
+    <div id="rankingContent" class="overflow-y-auto flex-1 mb-2 space-y-2 p-1 min-h-[200px]">
     </div>
     <div class="mt-2 pt-2">
       <button onclick="document.getElementById('rankingModal').classList.add('hidden')" class="w-full py-2 rounded-lg text-sm font-medium text-white shadow-sm" style="background:#2a9d8f;">닫기</button>
@@ -241,6 +240,19 @@
     let stepState = { step: 0, grade: '', cls: '', num: '' };
 
     function openStepModal(mode) {
+      // 입실 시간 제한 로직 (12:30 이후만 가능)
+      if (mode === 'checkin') {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+
+        // 12시 30분 전인지 확인 (0시~11시 거나 12시이고 분이 30분 미만일 경우)
+        if (currentHour < 12 || (currentHour === 12 && currentMinute < 30)) {
+          showAlert('입실 가능 시간이 아닙니다.\n(입실 가능 시간: 12시 30분 이후)');
+          return;
+        }
+      }
+
       currentMode = mode;
       stepState = { step: 0, grade: '', cls: '', num: '' };
       document.getElementById('stepModal').classList.remove('hidden');
@@ -286,7 +298,7 @@
       } else if (stepState.step === 2) {
         title.textContent = `${stepState.grade}학년 ${stepState.cls}반`;
         subtitle.textContent = '번호를 선택하세요';
-        // 수정: 27번까지 출력
+        // 27번까지 출력
         content.innerHTML = '<div class="grid grid-cols-5 gap-2" style="max-height:240px;overflow-y:auto;">' +
           Array.from({length:27}, (_,i) => i+1).map(n => `<button class="step-btn text-sm" onclick="selectNumber(${n})">${n}</button>`).join('') +
           '</div>';
@@ -331,7 +343,7 @@
           const checkinDoc = await db.collection('checkins').doc(studentId).get();
           if (checkinDoc.exists) { 
             closeStepModal(); 
-            showAlert('이미 입실중입니다.'); // 수정: 중복 입실 처리
+            showAlert('이미 입실중입니다.'); 
             return; 
           }
 
@@ -341,7 +353,7 @@
           });
           
           closeStepModal();
-          showAlert('입실되었습니다.'); // 수정: 성공 메시지
+          showAlert('입실되었습니다.'); 
         } else {
           // 퇴실 로직
           const doc = await db.collection('checkins').doc(studentId).get();
@@ -351,7 +363,9 @@
 
           const checkinTime = data.checkinTime.toDate();
           const now = new Date();
-          const diffMin = Math.floor((now - checkinTime) / 60000);
+          let diffMin = Math.floor((now - checkinTime) / 60000);
+          
+          if(diffMin < 0) diffMin = 0;
 
           const timeRef = db.collection('accumulated').doc(studentId);
           const timeDoc = await timeRef.get();
@@ -516,7 +530,7 @@
          `;
       }).join('');
       
-      // 처음 열렸을 때 애니메이션을 위해 아주 잠깐 지연 후 width 적용 (트릭)
+      // 처음 열렸을 때 애니메이션을 위해 아주 잠깐 지연 후 width 적용
       const bars = container.querySelectorAll('.bg-gradient-to-r');
       bars.forEach(bar => {
         const targetWidth = bar.style.width;
@@ -579,215 +593,202 @@
       }
     }
 
-// 순위 및 통계용 전역 변수
-let cachedRankingData = [];
-let currentCountSubTab = 'indiv';
+    // 순위 및 통계용 전역 변수
+    let cachedRankingData = [];
+    let currentCountSubTab = 'indiv';
 
-async function openRankingModal() {
-  document.getElementById('rankingModal').classList.remove('hidden');
-  document.getElementById('rankingContent').innerHTML = '<p class="text-center py-4 text-gray-500">데이터를 불러오는 중...</p>';
-  
-  try {
-    // DB에서 데이터 한 번만 불러와서 캐싱해두기 (탭 이동 시 딜레이 방지)
-    const querySnap = await db.collection('accumulated').get();
-    cachedRankingData = [];
-    querySnap.forEach(doc => cachedRankingData.push(doc.data()));
-    
-    // 기본 탭으로 설정
-    switchRankingTab('time');
-  } catch (error) {
-    document.getElementById('rankingContent').innerHTML = '<p class="text-center text-red-500 py-4">데이터를 불러오지 못했습니다.</p>';
-  }
-}
-
-// 탭 전환 로직
-function switchRankingTab(tab) {
-  // 탭 버튼 스타일 변경
-  ['time', 'count', 'perfect'].forEach(t => {
-    const el = document.getElementById(`tab-${t}`);
-    if (t === tab) {
-      el.className = 'flex-1 py-2 font-bold border-b-2 border-[#2a9d8f] text-[#2a9d8f]';
-    } else {
-      el.className = 'flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600';
+    async function openRankingModal() {
+      document.getElementById('rankingModal').classList.remove('hidden');
+      document.getElementById('rankingContent').innerHTML = '<p class="text-center py-4 text-gray-500">데이터를 불러오는 중...</p>';
+      
+      try {
+        const querySnap = await db.collection('accumulated').get();
+        cachedRankingData = [];
+        querySnap.forEach(doc => cachedRankingData.push(doc.data()));
+        
+        switchRankingTab('time');
+      } catch (error) {
+        document.getElementById('rankingContent').innerHTML = '<p class="text-center text-red-500 py-4">데이터를 불러오지 못했습니다.</p>';
+      }
     }
-  });
 
-  const content = document.getElementById('rankingContent');
-  content.innerHTML = ''; // 초기화
+    function switchRankingTab(tab) {
+      ['time', 'count', 'perfect'].forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          el.className = 'flex-1 py-2 font-bold border-b-2 border-[#2a9d8f] text-[#2a9d8f]';
+        } else {
+          el.className = 'flex-1 py-2 font-bold border-b-2 border-transparent text-gray-400 hover:text-gray-600';
+        }
+      });
 
-  if (tab === 'time') {
-    content.innerHTML = `
-      <div class="flex justify-center gap-2 mb-3">
-         <button id="time-subtab-indiv" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white" onclick="switchTimeSubTab('indiv')">개인별</button>
-         <button id="time-subtab-class" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchTimeSubTab('class')">학급별</button>
-      </div>
-      <div id="timeRankingList" class="space-y-2"></div>
-    `;
-    switchTimeSubTab('indiv');
-  } else if (tab === 'count') {
-    content.innerHTML = `
-      <div class="flex justify-center gap-2 mb-3">
-         <button id="subtab-indiv" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white" onclick="switchCountSubTab('indiv')">개인별</button>
-         <button id="subtab-class" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchCountSubTab('class')">학급별</button>
-      </div>
-      <div id="countRankingList" class="space-y-2"></div>
-    `;
-    switchCountSubTab('indiv');
-  } else if (tab === 'perfect') {
-    renderPerfectAttendance(content);
-  }
-}
+      const content = document.getElementById('rankingContent');
+      content.innerHTML = '';
 
-// 1. 누적시간 렌더링 (개인별/학급별)
-function switchTimeSubTab(subTab) {
-  document.getElementById('time-subtab-indiv').className = subTab === 'indiv' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
-  document.getElementById('time-subtab-class').className = subTab === 'class' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
-  
-  const listContainer = document.getElementById('timeRankingList');
-  listContainer.innerHTML = '';
-
-  if (subTab === 'indiv') {
-    const sorted = [...cachedRankingData].sort((a, b) => (b.totalMinutes || 0) - (a.totalMinutes || 0)).slice(0, 10);
-    
-    sorted.forEach((record, idx) => {
-      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
-      const mins = record.totalMinutes || 0;
-      if (mins === 0) return;
-      const timeStr = `${Math.floor(mins/60) > 0 ? Math.floor(mins/60) + '시간 ' : ''}${mins%60}분`;
-      const item = document.createElement('div');
-      item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
-      item.style.background = idx < 3 ? '#fef3c7' : '#f3f4f6';
-      item.innerHTML = `<span>${medal} ${record.grade}학년 ${record.class}반 ${record.number}번</span><span class="font-bold text-[#d97706]">${timeStr}</span>`;
-      listContainer.appendChild(item);
-    });
-    
-    if (listContainer.innerHTML === '') {
-      listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">아직 기록이 없습니다.</p>';
+      if (tab === 'time') {
+        content.innerHTML = `
+          <div class="flex justify-center gap-2 mb-3">
+             <button id="time-subtab-indiv" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white" onclick="switchTimeRankingSubTab('indiv')">개인별</button>
+             <button id="time-subtab-class" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchTimeRankingSubTab('class')">학급별</button>
+          </div>
+          <div id="timeRankingList" class="space-y-2"></div>
+        `;
+        switchTimeRankingSubTab('indiv');
+      } else if (tab === 'count') {
+        content.innerHTML = `
+          <div class="flex justify-center gap-2 mb-3">
+             <button id="subtab-indiv" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white" onclick="switchCountSubTab('indiv')">개인별</button>
+             <button id="subtab-class" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchCountSubTab('class')">학급별</button>
+          </div>
+          <div id="countRankingList" class="space-y-2"></div>
+        `;
+        switchCountSubTab('indiv');
+      } else if (tab === 'perfect') {
+        renderPerfectAttendance(content);
+      }
     }
-  } else {
-    // 학급별 시간 합산
-    const classTimes = {};
-    cachedRankingData.forEach(record => {
-      const classId = `${record.grade}학년 ${record.class}반`;
-      const mins = record.totalMinutes || 0;
-      if (mins > 0) classTimes[classId] = (classTimes[classId] || 0) + mins;
-    });
 
-    const sortedClasses = Object.entries(classTimes).sort((a,b) => b[1] - a[1]).slice(0, 10);
-    sortedClasses.forEach(([className, totalMins], idx) => {
-      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
-      const timeStr = `${Math.floor(totalMins/60) > 0 ? Math.floor(totalMins/60) + '시간 ' : ''}${totalMins%60}분`;
-      const item = document.createElement('div');
-      item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
-      item.style.background = idx < 3 ? '#e0e7ff' : '#f3f4f6';
-      item.innerHTML = `<span>${medal} ${className}</span><span class="font-bold text-[#4f46e5]">${timeStr}</span>`;
-      listContainer.appendChild(item);
-    });
+    function switchTimeRankingSubTab(subTab) {
+      document.getElementById('time-subtab-indiv').className = subTab === 'indiv' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
+      document.getElementById('time-subtab-class').className = subTab === 'class' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
+      
+      const listContainer = document.getElementById('timeRankingList');
+      listContainer.innerHTML = '';
 
-    if (listContainer.innerHTML === '') {
-      listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">기록이 없습니다.</p>';
+      if (subTab === 'indiv') {
+        const sorted = [...cachedRankingData].sort((a, b) => (b.totalMinutes || 0) - (a.totalMinutes || 0)).slice(0, 10);
+        
+        sorted.forEach((record, idx) => {
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
+          const mins = record.totalMinutes || 0;
+          if (mins === 0) return;
+          const timeStr = `${Math.floor(mins/60) > 0 ? Math.floor(mins/60) + '시간 ' : ''}${mins%60}분`;
+          const item = document.createElement('div');
+          item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
+          item.style.background = idx < 3 ? '#fef3c7' : '#f3f4f6';
+          item.innerHTML = `<span>${medal} ${record.grade}학년 ${record.class}반 ${record.number}번</span><span class="font-bold text-[#d97706]">${timeStr}</span>`;
+          listContainer.appendChild(item);
+        });
+        
+        if (listContainer.innerHTML === '') {
+          listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">아직 기록이 없습니다.</p>';
+        }
+      } else {
+        const classTimes = {};
+        cachedRankingData.forEach(record => {
+          const classId = `${record.grade}학년 ${record.class}반`;
+          const mins = record.totalMinutes || 0;
+          if (mins > 0) classTimes[classId] = (classTimes[classId] || 0) + mins;
+        });
+
+        const sortedClasses = Object.entries(classTimes).sort((a,b) => b[1] - a[1]).slice(0, 10);
+        sortedClasses.forEach(([className, totalMins], idx) => {
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
+          const timeStr = `${Math.floor(totalMins/60) > 0 ? Math.floor(totalMins/60) + '시간 ' : ''}${totalMins%60}분`;
+          const item = document.createElement('div');
+          item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
+          item.style.background = idx < 3 ? '#e0e7ff' : '#f3f4f6';
+          item.innerHTML = `<span>${medal} ${className}</span><span class="font-bold text-[#4f46e5]">${timeStr}</span>`;
+          listContainer.appendChild(item);
+        });
+
+        if (listContainer.innerHTML === '') {
+          listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">기록이 없습니다.</p>';
+        }
+      }
     }
-  }
-}
 
-// 2. 참여횟수 (개인별/학급별 렌더링)
-function switchCountSubTab(subTab) {
-  currentCountSubTab = subTab;
-  document.getElementById('subtab-indiv').className = subTab === 'indiv' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
-  document.getElementById('subtab-class').className = subTab === 'class' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
-  
-  const listContainer = document.getElementById('countRankingList');
-  listContainer.innerHTML = '';
+    function switchCountSubTab(subTab) {
+      currentCountSubTab = subTab;
+      document.getElementById('subtab-indiv').className = subTab === 'indiv' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
+      document.getElementById('subtab-class').className = subTab === 'class' ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#2a9d8f] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
+      
+      const listContainer = document.getElementById('countRankingList');
+      listContainer.innerHTML = '';
 
-  if (subTab === 'indiv') {
-     // 출석한 날짜 수가 많은 순 정렬
-     const sorted = [...cachedRankingData].sort((a, b) => {
-       const countA = Object.keys(a.dailyRecords || {}).length;
-       const countB = Object.keys(b.dailyRecords || {}).length;
-       if (countB !== countA) return countB - countA;
-       return (b.totalMinutes||0) - (a.totalMinutes||0); // 동점일 경우 시간순
-     }).slice(0, 10);
+      if (subTab === 'indiv') {
+         const sorted = [...cachedRankingData].sort((a, b) => {
+           const countA = Object.keys(a.dailyRecords || {}).length;
+           const countB = Object.keys(b.dailyRecords || {}).length;
+           if (countB !== countA) return countB - countA;
+           return (b.totalMinutes||0) - (a.totalMinutes||0);
+         }).slice(0, 10);
 
-     sorted.forEach((record, idx) => {
-       const count = Object.keys(record.dailyRecords || {}).length;
-       if (count === 0) return;
-       const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
-       const item = document.createElement('div');
-       item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
-       item.style.background = idx < 3 ? '#fef3c7' : '#f3f4f6';
-       item.innerHTML = `<span>${medal} ${record.grade}학년 ${record.class}반 ${record.number}번</span><span class="font-bold text-[#2a9d8f]">${count}회 참석</span>`;
-       listContainer.appendChild(item);
-     });
-     
-     if (listContainer.innerHTML === '') listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">기록이 없습니다.</p>';
-  } else {
-     // 학급별 횟수 합산
-     const classCounts = {};
-     cachedRankingData.forEach(record => {
-       const classId = `${record.grade}학년 ${record.class}반`;
-       const count = Object.keys(record.dailyRecords || {}).length;
-       if (count > 0) classCounts[classId] = (classCounts[classId] || 0) + count;
-     });
+         sorted.forEach((record, idx) => {
+           const count = Object.keys(record.dailyRecords || {}).length;
+           if (count === 0) return;
+           const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
+           const item = document.createElement('div');
+           item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
+           item.style.background = idx < 3 ? '#fef3c7' : '#f3f4f6';
+           item.innerHTML = `<span>${medal} ${record.grade}학년 ${record.class}반 ${record.number}번</span><span class="font-bold text-[#2a9d8f]">${count}회 참석</span>`;
+           listContainer.appendChild(item);
+         });
+         
+         if (listContainer.innerHTML === '') listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">기록이 없습니다.</p>';
+      } else {
+         const classCounts = {};
+         cachedRankingData.forEach(record => {
+           const classId = `${record.grade}학년 ${record.class}반`;
+           const count = Object.keys(record.dailyRecords || {}).length;
+           if (count > 0) classCounts[classId] = (classCounts[classId] || 0) + count;
+         });
 
-     const sortedClasses = Object.entries(classCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
-     sortedClasses.forEach(([className, count], idx) => {
-       const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
-       const item = document.createElement('div');
-       item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
-       item.style.background = idx < 3 ? '#e0e7ff' : '#f3f4f6';
-       item.innerHTML = `<span>${medal} ${className}</span><span class="font-bold text-[#4f46e5]">총 ${count}회 참석</span>`;
-       listContainer.appendChild(item);
-     });
+         const sortedClasses = Object.entries(classCounts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+         sortedClasses.forEach(([className, count], idx) => {
+           const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}위`;
+           const item = document.createElement('div');
+           item.className = 'p-3 rounded-lg shadow-sm text-sm font-medium flex justify-between items-center';
+           item.style.background = idx < 3 ? '#e0e7ff' : '#f3f4f6';
+           item.innerHTML = `<span>${medal} ${className}</span><span class="font-bold text-[#4f46e5]">총 ${count}회 참석</span>`;
+           listContainer.appendChild(item);
+         });
 
-     if (listContainer.innerHTML === '') listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">기록이 없습니다.</p>';
-  }
-}
+         if (listContainer.innerHTML === '') listContainer.innerHTML = '<p class="text-center text-gray-500 py-4">기록이 없습니다.</p>';
+      }
+    }
 
-// 3. 개근자 렌더링
-function renderPerfectAttendance(container) {
-   // 대상 날짜 문자열 (해당 날짜에 해당하는 기록이 있는지 확인)
-   const targetDates = ['06-29', '06-30', '07-01', '07-02', '07-03'];
-   
-   const perfectStudents = cachedRankingData.filter(student => {
-     const recordDates = Object.keys(student.dailyRecords || {});
-     // 대상 5일이 모두 recordDates에 포함되어 있는지 검사 (년도 상관없이 유연하게 확인)
-     return targetDates.every(td => recordDates.some(rd => rd.endsWith(td)));
-   });
+    function renderPerfectAttendance(container) {
+       const targetDates = ['06-29', '06-30', '07-01', '07-02', '07-03'];
+       
+       const perfectStudents = cachedRankingData.filter(student => {
+         const recordDates = Object.keys(student.dailyRecords || {});
+         return targetDates.every(td => recordDates.some(rd => rd.endsWith(td)));
+       });
 
-   // 개근자 목록 학년, 반, 번호순으로 보기 좋게 정렬
-   perfectStudents.sort((a,b) => {
-      if(a.grade !== b.grade) return a.grade - b.grade;
-      if(a.class !== b.class) return a.class - b.class;
-      return a.number - b.number;
-   });
+       perfectStudents.sort((a,b) => {
+          if(a.grade !== b.grade) return a.grade - b.grade;
+          if(a.class !== b.class) return a.class - b.class;
+          return a.number - b.number;
+       });
 
-   if (perfectStudents.length > 0) {
-     const header = document.createElement('div');
-     header.className = 'mb-3 text-center text-sm text-[#2a9d8f] font-bold bg-[#e6fcf5] py-2 rounded-lg';
-     header.textContent = `🎉 5일 개근 달성자 총 ${perfectStudents.length}명 🎉`;
-     container.appendChild(header);
+       if (perfectStudents.length > 0) {
+         const header = document.createElement('div');
+         header.className = 'mb-3 text-center text-sm text-[#2a9d8f] font-bold bg-[#e6fcf5] py-2 rounded-lg';
+         header.textContent = `🎉 5일 개근 달성자 총 ${perfectStudents.length}명 🎉`;
+         container.appendChild(header);
 
-     const listGrid = document.createElement('div');
-     listGrid.className = 'grid grid-cols-2 gap-2';
+         const listGrid = document.createElement('div');
+         listGrid.className = 'grid grid-cols-2 gap-2';
 
-     perfectStudents.forEach(record => {
-       const item = document.createElement('div');
-       item.className = 'p-2 rounded-lg shadow-sm text-xs font-bold text-center border border-[#2a9d8f] bg-white text-[#134e4a]';
-       item.textContent = `${record.grade}학년 ${record.class}반 ${record.number}번`;
-       listGrid.appendChild(item);
-     });
-     container.appendChild(listGrid);
-   } else {
-     container.innerHTML = `
-       <div class="text-center py-8">
-         <p class="text-4xl mb-3">🎁</p>
-         <p class="text-gray-500 text-sm font-medium">아직 5일 개근 달성자가 없습니다.<br>완주를 응원합니다!</p>
-       </div>
-     `;
-   }
-}
+         perfectStudents.forEach(record => {
+           const item = document.createElement('div');
+           item.className = 'p-2 rounded-lg shadow-sm text-xs font-bold text-center border border-[#2a9d8f] bg-white text-[#134e4a]';
+           item.textContent = `${record.grade}학년 ${record.class}반 ${record.number}번`;
+           listGrid.appendChild(item);
+         });
+         container.appendChild(listGrid);
+       } else {
+         container.innerHTML = `
+           <div class="text-center py-8">
+             <p class="text-4xl mb-3">🎁</p>
+             <p class="text-gray-500 text-sm font-medium">아직 5일 개근 달성자가 없습니다.<br>완주를 응원합니다!</p>
+           </div>
+         `;
+       }
+    }
 
-function showAlert(msg) {
+    function showAlert(msg) {
       document.getElementById('alertMsg').textContent = msg;
       document.getElementById('alertModal').classList.remove('hidden');
     }
