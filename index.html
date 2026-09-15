@@ -464,6 +464,7 @@
         content.innerHTML = `
           <div class="flex justify-center gap-2 mb-4">
              <button id="chart-subtab-all" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#3b82f6] text-white" onclick="switchChartSubTab('all')">전체</button>
+             <button id="chart-subtab-g1" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchChartSubTab('g1')">1학년</button>
              <button id="chart-subtab-g2" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchChartSubTab('g2')">2학년</button>
              <button id="chart-subtab-g3" class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500" onclick="switchChartSubTab('g3')">3학년</button>
           </div>
@@ -474,7 +475,7 @@
     }
 
     function switchChartSubTab(scope) {
-      ['all', 'g2', 'g3'].forEach(s => {
+      ['all', 'g1', 'g2', 'g3'].forEach(s => {
          const btn = document.getElementById(`chart-subtab-${s}`);
          if(btn) {
             btn.className = s === scope ? 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-[#3b82f6] text-white' : 'px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-gray-100 text-gray-500';
@@ -485,17 +486,19 @@
       let dataPoints = [];
 
       if (scope === 'all') {
-         let sum2 = 0, sum3 = 0;
+         let sum1 = 0, sum2 = 0, sum3 = 0;
          cachedTimeViewData.forEach(d => {
+            if(d.grade === '1') sum1 += (d.totalMinutes || 0);
             if(d.grade === '2') sum2 += (d.totalMinutes || 0);
             if(d.grade === '3') sum3 += (d.totalMinutes || 0);
          });
          dataPoints = [
+            { label: '1학년 전체 누적', val: sum1 },
             { label: '2학년 전체 누적', val: sum2 },
             { label: '3학년 전체 누적', val: sum3 }
          ];
       } else {
-         const targetGrade = scope === 'g2' ? '2' : '3';
+         const targetGrade = scope === 'g1' ? '1' : scope === 'g2' ? '2' : '3';
          const classSums = {};
          cachedTimeViewData.forEach(d => {
             if(d.grade === targetGrade) {
