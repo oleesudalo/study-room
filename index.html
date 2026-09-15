@@ -305,14 +305,19 @@
     let stepState = { step: 0, grade: '', cls: '', num: '' };
 
     function openStepModal(mode) {
-      if (mode === 'checkin') {
+      if (mode === 'checkin' || mode === 'checkout') {
         const now = new Date();
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
+        
+        // 시간을 분 단위로 환산하여 계산 (12:35 = 755분, 13:25 = 805분)
+        const totalMins = currentHour * 60 + currentMinute;
+        const startMins = 12 * 60 + 35;
+        const endMins = 13 * 60 + 25;
 
-        // 12시 30분 전인지 확인
-        if (currentHour < 12 || (currentHour === 12 && currentMinute < 30)) {
-          showAlert('입실 가능 시간이 아닙니다.\n(12시 30분 이후 가능)', 'alert-circle', 'text-rose-600', 'bg-rose-100');
+        // 지정된 시간(12:35 ~ 13:25)을 벗어났는지 확인
+        if (totalMins < startMins || totalMins > endMins) {
+          showAlert('입/퇴실 가능 시간이 아닙니다.\n(12:35 ~ 13:25 에만 가능합니다)', 'clock', 'text-rose-600', 'bg-rose-100');
           return;
         }
       }
