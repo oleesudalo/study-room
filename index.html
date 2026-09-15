@@ -39,7 +39,7 @@
     </header>
     
     <h1 class="text-center font-black leading-tight mb-4" style="color:#1a3a4a;font-size:52px;">동명 열공 프로젝트</h1>
-    <p class="text-center mb-6" style="color:#5a7a8a;font-size:22px;">같이 공부하면 더 재밌어! 5일 완주 도전</p>
+    <p class="text-center mb-6" style="color:#5a7a8a;font-size:22px;">같이 공부하면 더 재밌어! 8일 완주 도전</p>
     
     <section class="w-full mb-5">
      <div class="flex items-center justify-center gap-3 mb-3">
@@ -47,8 +47,8 @@
       <h2 class="font-bold text-center" style="color:#1a3a4a;font-size:32px;">일정</h2>
      </div>
      <div class="rounded-xl p-5 text-center shadow-sm bg-white">
-      <p class="font-bold mb-3" style="color:#1a3a4a;font-size:24px;">6월 29일(월) ~ 7월 3일(금)</p>
-      <p class="mb-3" style="color:#5a7a8a;font-size:20px;">5일간 진행</p>
+      <p class="font-bold mb-3" style="color:#1a3a4a;font-size:24px;">9월 21일(월) ~ 10월 2일(금)</p>
+      <p class="mb-3" style="color:#5a7a8a;font-size:20px;">8일간 진행 (주말, 24~25일 제외)</p>
       <p style="color:#5a7a8a;font-size:20px;">매일 12:35 ~ 1:25 (50분)</p>
      </div>
     </section>
@@ -95,7 +95,7 @@
     <section class="w-full mb-6">
      <div class="rounded-xl p-5 text-center shadow-sm bg-white">
       <p class="font-bold mb-3" style="color:#1a3a4a;font-size:20px;">🎁 SPECIAL REWARD</p>
-      <p class="font-bold mb-3" style="color:#1a3a4a;font-size:24px;">5일 개근 → 응원 간식 선물</p>
+      <p class="font-bold mb-3" style="color:#1a3a4a;font-size:24px;">8일 개근 → 응원 간식 선물</p>
       <p style="color:#5a7a8a;font-size:18px;">하루도 빠짐없이 참석한 분께 드리는 특별 선물!</p>
      </div>
     </section>
@@ -752,7 +752,7 @@
     }
 
     function renderPerfectAttendance(container) {
-       const targetDates = ['06-29', '06-30', '07-01', '07-02', '07-03'];
+       const targetDates = ['09-21', '09-22', '09-23', '09-28', '09-29', '09-30', '10-01', '10-02'];
        
        const perfectStudents = cachedRankingData.filter(student => {
          const recordDates = Object.keys(student.dailyRecords || {});
@@ -768,7 +768,7 @@
        if (perfectStudents.length > 0) {
          const header = document.createElement('div');
          header.className = 'mb-3 text-center text-sm text-[#2a9d8f] font-bold bg-[#e6fcf5] py-2 rounded-lg';
-         header.textContent = `🎉 5일 개근 달성자 총 ${perfectStudents.length}명 🎉`;
+         header.textContent = `🎉 8일 개근 달성자 총 ${perfectStudents.length}명 🎉`;
          container.appendChild(header);
 
          const listGrid = document.createElement('div');
@@ -785,7 +785,7 @@
          container.innerHTML = `
            <div class="text-center py-8">
              <p class="text-4xl mb-3">🎁</p>
-             <p class="text-gray-500 text-sm font-medium">아직 5일 개근 달성자가 없습니다.<br>완주를 응원합니다!</p>
+             <p class="text-gray-500 text-sm font-medium">아직 8일 개근 달성자가 없습니다.<br>완주를 응원합니다!</p>
            </div>
          `;
        }
